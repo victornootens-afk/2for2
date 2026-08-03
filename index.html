@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2 ans, nous deux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Karla:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ivory: #FBF5EE;
+    --ivory-deep: #F3E9DD;
+    --blush: #E7B8B4;
+    --wine: #6B2A38;
+    --wine-deep: #4A1D28;
+    --gold: #B6924F;
+    --ink: #2E2119;
+    --line: rgba(46,33,25,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ivory);
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .display {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--wine);
+    outline-offset: 3px;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    padding: 40px 24px;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 20%, rgba(231,184,180,0.35), transparent),
+      linear-gradient(180deg, var(--ivory) 0%, var(--ivory-deep) 100%);
+    overflow: hidden;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--wine);
+    margin-bottom: 18px;
+    opacity: 0;
+    animation: fadeUp 0.9s ease 0.1s forwards;
+  }
+
+  .hero-number {
+    font-size: clamp(7rem, 28vw, 15rem);
+    line-height: 0.85;
+    color: var(--wine);
+    font-style: italic;
+    font-weight: 500;
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.25s forwards;
+  }
+
+  .hero-number sup {
+    font-size: 0.22em;
+    font-style: normal;
+    font-weight: 600;
+    top: -0.6em;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+
+  .hero-title {
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    max-width: 16ch;
+    margin-top: 12px;
+    color: var(--ink);
+    opacity: 0;
+    animation: fadeUp 1s ease 0.45s forwards;
+  }
+
+  .hero-sub {
+    margin-top: 20px;
+    font-size: 1.05rem;
+    color: rgba(46,33,25,0.65);
+    max-width: 42ch;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.6s forwards;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 32px;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--wine);
+    opacity: 0;
+    animation: fadeUp 1s ease 0.9s forwards, bob 2.4s ease-in-out 1.8s infinite;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section { padding: 120px 24px; position: relative; }
+  .section-inner { max-width: 920px; margin: 0 auto; }
+
+  .section-head { text-align: center; margin-bottom: 72px; }
+  .section-head .kicker {
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 14px;
+  }
+  .section-head h2 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--wine-deep);
+  }
+
+  /* ---------- ROUTE / TIMELINE ---------- */
+  .route {
+    position: relative;
+  }
+  .route-path {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--gold) 0px, var(--gold) 8px, transparent 8px, transparent 18px
+    );
+    opacity: 0.6;
+  }
+
+  .stop {
+    position: relative;
+    width: 46%;
+    padding: 28px 30px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 12px 30px rgba(46,33,25,0.07);
+    margin-bottom: 56px;
+  }
+  .stop:nth-child(odd) { margin-right: auto; }
+  .stop:nth-child(even) { margin-left: auto; }
+
+  .stop::before {
+    content: '';
+    position: absolute;
+    top: 34px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--wine);
+    box-shadow: 0 0 0 5px var(--ivory), 0 0 0 6px var(--line);
+  }
+  .stop:nth-child(odd)::before { right: -37px; }
+  .stop:nth-child(even)::before { left: -37px; }
+
+  .stop .date {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .stop h3 {
+    font-size: 1.35rem;
+    color: var(--wine-deep);
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+  .stop p { color: rgba(46,33,25,0.72); line-height: 1.55; font-size: 0.98rem; }
+
+  @media (max-width: 720px) {
+    .route-path { left: 18px; }
+    .stop { width: 100%; padding-left: 46px; }
+    .stop:nth-child(odd), .stop:nth-child(even) { margin: 0 0 40px 0; }
+    .stop::before { left: -1px !important; right: auto !important; }
+  }
+
+  /* ---------- GALLERY ---------- */
+  .gallery {
+    background: var(--wine-deep);
+    color: var(--ivory);
+  }
+  .gallery .section-head h2 { color: var(--ivory); }
+  .gallery .section-head .kicker { color: var(--blush); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 130px;
+    gap: 12px;
+  }
+  .frame {
+    position: relative;
+    border-radius: 3px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(231,184,180,0.25), rgba(182,146,79,0.2));
+    border: 1px solid rgba(251,245,238,0.15);
+  }
+  .frame img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .frame .placeholder-label {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(251,245,238,0.45); text-align: center; padding: 8px;
+  }
+  .frame.big { grid-column: span 2; grid-row: span 2; }
+
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 110px; }
+    .frame.big { grid-column: span 2; grid-row: span 1; }
+  }
+
+  /* ---------- LETTER ---------- */
+  .letter {
+    background: var(--ivory-deep);
+  }
+  .letter-card {
+    background: #fff;
+    padding: clamp(32px, 6vw, 64px);
+    border-radius: 4px;
+    box-shadow: 0 20px 50px rgba(46,33,25,0.08);
+    position: relative;
+  }
+  .letter-card::before {
+    content: '”';
+    position: absolute;
+    top: -10px;
+    left: 30px;
+    font-family: 'Fraunces', serif;
+    font-size: 6rem;
+    color: var(--blush);
+    line-height: 1;
+  }
+  .letter-body {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    line-height: 1.75;
+    color: var(--ink);
+    max-width: 62ch;
+    margin: 0 auto;
+  }
+  .letter-sign {
+    margin-top: 32px;
+    text-align: right;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--wine);
+    font-size: 1.15rem;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    padding: 80px 24px 56px;
+    text-align: center;
+    background: var(--ivory);
+  }
+  footer .display {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    color: var(--wine);
+    font-style: italic;
+  }
+  footer .tiny {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: rgba(46,33,25,0.5);
+    letter-spacing: 0.05em;
+  }
+
+  /* reveal on scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <span class="hero-eyebrow">Depuis le premier jour</span>
+    <div class="hero-number">2<sup>ans</sup></div>
+    <h1 class="hero-title">et toujours autant envie de faire la route avec toi</h1>
+    <p class="hero-sub">Un petit site rien que pour toi, pour fêter nos deux ans ensemble.</p>
+    <span class="scroll-cue">Continue de descendre ↓</span>
+  </section>
+
+  <!-- ============ CHRONOLOGIE ============ -->
+  <section class="route">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <span class="kicker">Notre route jusqu'ici</span>
+        <h2>Quelques étapes en chemin</h2>
+      </div>
+
+      <div style="position: relative;">
+        <div class="route-path"></div>
+
+        <!-- Astuce : modifie les dates, titres et textes ci-dessous avec vos propres souvenirs -->
+        <div class="stop reveal">
+          <span class="date">Étape 1</span>
+          <h3>Le tout premier jour</h3>
+          <p>Là où tout a commencé. Remplace ce texte par le souvenir de votre rencontre — le lieu, ce que tu as ressenti, le petit détail que tu n'as jamais oublié.</p>
+        </div>
+
+        <div class="stop reveal">
+          <span class="date">Étape 2</span>
+          <h3>Le quiz que je t'ai fabriqué</h3>
+          <p>Un PowerPoint entier sur des objets improbables de pêche et de bricolage, juste pour te faire rire — et tu as presque tout deviné.</p>
+        </div>
+
+        <div class="stop reveal">
+          <span class="date">Étape 3</span>
+          <h3>Un souvenir à toi</h3>
+          <p>Ajoute ici un moment marquant : un voyage, un fou rire, une soirée toute simple qui est devenue un souvenir précieux.</p>
+        </div>
+
+        <div class="stop reveal">
+          <span class="date">Étape 4</span>
+          <h3>Aujourd'hui</h3>
+          <p>Deux ans plus tard, et l'envie de continuer la route ensemble est toujours intacte.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALERIE ============ -->
+  <section class="gallery">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <span class="kicker">En images</span>
+        <h2>Nous deux, un peu partout</h2>
+      </div>
+
+      <!-- Remplace chaque <div class="frame"> par une image :
+           <div class="frame"><img src="tonimage.jpg" alt="description"></div> -->
+      <div class="grid reveal">
+        <div class="frame big"><span class="placeholder-label">Votre photo préférée ici</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LETTRE ============ -->
+  <section class="letter">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <span class="kicker">Pour toi</span>
+        <h2>Une petite lettre</h2>
+      </div>
+
+      <div class="letter-card reveal">
+        <!-- Remplace ce texte par ton propre message -->
+        <p class="letter-body">
+          Deux ans, et j'ai encore l'impression qu'on invente les règles au fur et à mesure — et c'est exactement ce que j'aime.
+          Merci pour ta patience, ton rire, et pour tous ces petits riens qui rendent tout plus léger.
+          J'ai hâte de voir tout ce qu'on va encore construire ensemble.
+        </p>
+        <p class="letter-sign">— Victor</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <p class="display">à nous, encore et encore</p>
+    <p class="tiny">Fait avec un peu de code et beaucoup plus d'amour.</p>
+  </footer>
+
+  <script>
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
