@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deux ans</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white: #FFFFFF;
+    --mist: #F8F6FC;
+    --lilac: #E9E1F8;
+    --lilac-deep: #D2C2F0;
+    --violet: #8B6FD6;
+    --violet-deep: #5B3FA0;
+    --ink: #17151C;
+    --grey: #75717E;
+    --line: rgba(23,21,28,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--white);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .display {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--violet-deep);
+    outline-offset: 3px;
+  }
+
+  section { padding: 160px 24px; position: relative; }
+  .inner { max-width: 1080px; margin: 0 auto; }
+
+  /* ---------- NAV ---------- */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    padding: 18px 24px;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(255,255,255,0.7);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    width: 100%;
+    max-width: 1080px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .nav-mark {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--violet-deep);
+  }
+  .nav-tag {
+    font-size: 0.78rem;
+    color: var(--grey);
+    letter-spacing: 0.02em;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    position: relative;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.55;
+    z-index: 0;
+    will-change: transform;
+  }
+  .orb-a {
+    width: 520px; height: 520px;
+    top: -160px; left: 50%;
+    transform: translateX(-70%);
+    background: radial-gradient(circle, var(--lilac-deep), transparent 70%);
+  }
+  .orb-b {
+    width: 420px; height: 420px;
+    top: 100px; right: -120px;
+    background: radial-gradient(circle, var(--violet), transparent 70%);
+    opacity: 0.35;
+  }
+
+  .hero-content { position: relative; z-index: 1; }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--violet-deep);
+    background: var(--mist);
+    border: 1px solid var(--line);
+    padding: 7px 16px;
+    border-radius: 999px;
+    margin-bottom: 30px;
+    opacity: 0;
+    animation: fadeUp 0.9s cubic-bezier(.16,1,.3,1) 0.1s forwards;
+  }
+
+  .hero-title {
+    font-size: clamp(3.2rem, 9vw, 7rem);
+    line-height: 1.02;
+    color: var(--ink);
+    opacity: 0;
+    animation: fadeUp 1s cubic-bezier(.16,1,.3,1) 0.25s forwards;
+  }
+  .hero-title .grad {
+    background: linear-gradient(100deg, var(--violet-deep), var(--violet) 60%, var(--lilac-deep));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-sub {
+    margin-top: 26px;
+    font-size: clamp(1.05rem, 2vw, 1.3rem);
+    color: var(--grey);
+    max-width: 40ch;
+    margin-left: auto; margin-right: auto;
+    opacity: 0;
+    animation: fadeUp 1s cubic-bezier(.16,1,.3,1) 0.45s forwards;
+  }
+
+  .scroll-cue {
+    margin-top: 64px;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--violet);
+    opacity: 0;
+    animation: fadeUp 1s ease 0.7s forwards, bob 2.4s ease-in-out 1.8s infinite;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(7px); }
+  }
+
+  /* ---------- STATEMENT (mots qui apparaissent au scroll) ---------- */
+  .statement {
+    background: var(--mist);
+  }
+  .statement-text {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.8rem, 5vw, 3.4rem);
+    line-height: 1.28;
+    letter-spacing: -0.02em;
+    text-align: center;
+    max-width: 18ch;
+    margin: 0 auto;
+  }
+  .word {
+    display: inline-block;
+    opacity: 0.15;
+    transition: opacity 0.6s ease;
+  }
+  .word.lit { opacity: 1; color: var(--violet-deep); }
+  .word.plain.lit { color: var(--ink); }
+
+  /* ---------- ETAPES (cartes) ---------- */
+  .stages { background: var(--white); }
+  .section-head { text-align: center; margin-bottom: 72px; }
+  .section-head .kicker {
+    font-size: 0.78rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--violet);
+    display: block;
+    margin-bottom: 14px;
+  }
+  .section-head h2 {
+    font-size: clamp(2.1rem, 5vw, 3.2rem);
+    color: var(--ink);
+  }
+
+  .stage-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  /* Carte retournable */
+  .stage-card {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    height: 300px;
+    perspective: 1400px;
+    cursor: pointer;
+    border-radius: 28px;
+  }
+  .stage-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(.16,1,.3,1);
+  }
+  .stage-card:hover .stage-card-inner {
+    transform: translateY(-4px) rotateY(0deg);
+  }
+  .stage-card.flipped .stage-card-inner {
+    transform: rotateY(180deg);
+  }
+  .stage-card.flipped:hover .stage-card-inner {
+    transform: rotateY(180deg) translateY(-4px);
+  }
+
+  .stage-card-front, .stage-card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 28px;
+    border: 1px solid var(--line);
+    box-shadow: 0 1px 2px rgba(23,21,28,0.04);
+    transition: box-shadow 0.45s ease, border-color 0.45s ease;
+  }
+  .stage-card:hover .stage-card-front,
+  .stage-card:hover .stage-card-back {
+    box-shadow: 0 24px 48px rgba(91,63,160,0.14);
+    border-color: var(--lilac-deep);
+  }
+
+  .stage-card-front {
+    background: var(--white);
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+  }
+  .stage-card-front .mark {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--mist);
+    color: var(--violet-deep);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 22px;
+  }
+  .stage-card-front h3 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 1.35rem;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+  .stage-card-front p {
+    color: var(--grey);
+    line-height: 1.6;
+    font-size: 0.97rem;
+  }
+  .stage-card-front .flip-hint {
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 0.78rem;
+    color: var(--violet);
+    letter-spacing: 0.02em;
+  }
+
+  .stage-card-back {
+    transform: rotateY(180deg);
+    overflow: hidden;
+    background: linear-gradient(150deg, var(--lilac), var(--mist));
+  }
+  .stage-card-back img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .stage-card-back .placeholder-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    font-size: 0.8rem;
+    color: var(--violet-deep);
+    opacity: 0.6;
+    letter-spacing: 0.02em;
+  }
+
+  @media (max-width: 720px) {
+    .stage-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- GALERIE ---------- */
+  .gallery { background: var(--mist); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 160px;
+    gap: 16px;
+  }
+  .frame {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background: linear-gradient(150deg, var(--lilac), var(--white));
+    border: 1px solid var(--line);
+  }
+  .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frame .placeholder-label {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--violet-deep); opacity: 0.55; text-align: center; padding: 8px;
+  }
+  .frame.big { grid-column: span 2; grid-row: span 2; }
+
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 130px; }
+    .frame.big { grid-column: span 2; grid-row: span 1; }
+  }
+
+  /* ---------- LETTRE ---------- */
+  .letter { background: var(--white); }
+  .letter-card {
+    background: linear-gradient(165deg, var(--mist), var(--white));
+    border: 1px solid var(--line);
+    border-radius: 32px;
+    padding: clamp(36px, 6vw, 72px);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .letter-card::before {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, var(--lilac-deep), transparent 70%);
+    filter: blur(60px);
+    opacity: 0.5;
+    top: -100px; right: -100px;
+  }
+  .letter-body {
+    position: relative;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 500;
+    font-size: clamp(1.25rem, 2.6vw, 1.7rem);
+    line-height: 1.6;
+    color: var(--ink);
+    max-width: 46ch;
+    margin: 0 auto;
+    letter-spacing: -0.01em;
+  }
+  .letter-sign {
+    position: relative;
+    margin-top: 30px;
+    font-size: 0.95rem;
+    color: var(--violet-deep);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- AJOUT DE PHOTOS ---------- */
+  .upload-section { background: var(--mist); }
+  .upload-intro {
+    margin-top: 18px;
+    color: var(--grey);
+    font-size: 1rem;
+    max-width: 44ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 48px 24px;
+    border: 1.5px dashed var(--lilac-deep);
+    border-radius: 28px;
+    background: var(--white);
+    color: var(--violet-deep);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+  }
+  .dropzone:hover, .dropzone:focus-within {
+    border-color: var(--violet);
+    background: var(--lilac);
+    transform: translateY(-2px);
+  }
+  .dropzone.dragover {
+    border-color: var(--violet-deep);
+    background: var(--lilac);
+  }
+  .dropzone-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin-top: 8px;
+  }
+  .dropzone-sub {
+    font-size: 0.88rem;
+    color: var(--grey);
+  }
+
+  .upload-status {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--violet-deep);
+    min-height: 1.2em;
+    margin-top: 16px;
+  }
+
+  .upload-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px;
+    margin-top: 32px;
+  }
+  .upload-thumb {
+    position: relative;
+    aspect-ratio: 1/1;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--white);
+  }
+  .upload-thumb img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .upload-thumb button {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(23,21,28,0.55);
+    color: #fff;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+  }
+  .upload-thumb:hover button, .upload-thumb button:focus-visible {
+    opacity: 1;
+  }
+  .upload-thumb button:hover { background: var(--violet-deep); }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    padding: 70px 24px 48px;
+    text-align: center;
+    border-top: 1px solid var(--line);
+  }
+  footer .display {
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+    background: linear-gradient(100deg, var(--violet-deep), var(--violet));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  footer .tiny {
+    margin-top: 14px;
+    font-size: 0.82rem;
+    color: var(--grey);
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.8s cubic-bezier(.16,1,.3,1), transform 0.8s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+  .stage-card.reveal:nth-child(2) { transition-delay: 0.08s; }
+  .stage-card.reveal:nth-child(3) { transition-delay: 0.16s; }
+  .stage-card.reveal:nth-child(4) { transition-delay: 0.24s; }
+</style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <span class="nav-mark">Nous deux</span>
+      <span class="nav-tag">2 ans ensemble</span>
+    </div>
+  </nav>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="hero-content">
+      <span class="hero-eyebrow">✦ Édition anniversaire</span>
+      <h1 class="hero-title">Deux ans<br><span class="grad">à nous.</span></h1>
+      <p class="hero-sub">Un petit site rien que pour toi, pour fêter tout ce qu'on a construit ensemble.</p>
+      <p class="scroll-cue">Continue de descendre ↓</p>
+    </div>
+  </section>
+
+  <!-- ============ STATEMENT AU SCROLL ============ -->
+  <section class="statement">
+    <div class="inner">
+      <p class="statement-text" id="statement" aria-label="Deux ans, et toujours autant envie de faire la route avec toi.">
+        <!-- mots générés en JS pour l'effet de révélation -->
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ ETAPES ============ -->
+  <section class="stages">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">Notre histoire</span>
+        <h2>Quelques étapes en chemin</h2>
+      </div>
+
+      <!-- Astuce : remplace titres et textes avec vos propres souvenirs.
+           Pour mettre une photo au dos de chaque carte, remplace le <span class="placeholder-label">
+           par : <img src="tonimage.jpg" alt="description"> -->
+      <div class="stage-grid">
+        <div class="stage-card reveal" role="button" tabindex="0" aria-pressed="false" aria-label="Le premier jour, cliquer pour révéler une photo">
+          <div class="stage-card-inner">
+            <div class="stage-card-front">
+              <div class="mark">01</div>
+              <h3>Le premier jour</h3>
+              <p>Là où tout a commencé. Remplace ce texte par le souvenir de votre rencontre — le lieu, ce que tu as ressenti.</p>
+              <span class="flip-hint">↻ Clique pour voir la photo</span>
+            </div>
+            <div class="stage-card-back">
+              <span class="placeholder-label">Photo à ajouter ici</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-card reveal" role="button" tabindex="0" aria-pressed="false" aria-label="Le quiz fait maison, cliquer pour révéler une photo">
+          <div class="stage-card-inner">
+            <div class="stage-card-front">
+              <div class="mark">02</div>
+              <h3>Le quiz fait maison</h3>
+              <p>Un PowerPoint entier sur des objets improbables de pêche et de bricolage, juste pour te faire rire — et tu as presque tout deviné.</p>
+              <span class="flip-hint">↻ Clique pour voir la photo</span>
+            </div>
+            <div class="stage-card-back">
+              <span class="placeholder-label">Photo à ajouter ici</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-card reveal" role="button" tabindex="0" aria-pressed="false" aria-label="Un souvenir à toi, cliquer pour révéler une photo">
+          <div class="stage-card-inner">
+            <div class="stage-card-front">
+              <div class="mark">03</div>
+              <h3>Un souvenir à toi</h3>
+              <p>Ajoute ici un voyage, un fou rire, une soirée toute simple devenue précieuse.</p>
+              <span class="flip-hint">↻ Clique pour voir la photo</span>
+            </div>
+            <div class="stage-card-back">
+              <span class="placeholder-label">Photo à ajouter ici</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-card reveal" role="button" tabindex="0" aria-pressed="false" aria-label="Aujourd'hui, cliquer pour révéler une photo">
+          <div class="stage-card-inner">
+            <div class="stage-card-front">
+              <div class="mark">04</div>
+              <h3>Aujourd'hui</h3>
+              <p>Deux ans plus tard, et l'envie de continuer est toujours intacte.</p>
+              <span class="flip-hint">↻ Clique pour voir la photo</span>
+            </div>
+            <div class="stage-card-back">
+              <span class="placeholder-label">Photo à ajouter ici</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALERIE ============ -->
+  <section class="gallery">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">En images</span>
+        <h2>Nous deux, un peu partout</h2>
+      </div>
+
+      <!-- Remplace chaque .frame par une image :
+           <div class="frame"><img src="tonimage.jpg" alt="description"></div> -->
+      <div class="grid reveal">
+        <div class="frame big"><span class="placeholder-label">Votre photo préférée ici</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+        <div class="frame"><span class="placeholder-label">Photo</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LETTRE ============ -->
+  <section class="letter">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">Pour toi</span>
+        <h2>Une petite lettre</h2>
+      </div>
+
+      <div class="letter-card reveal">
+        <!-- Remplace ce texte par ton propre message -->
+        <p class="letter-body">
+          Deux ans, et j'ai encore l'impression qu'on invente les règles au fur et à mesure — et c'est exactement ce que j'aime.
+          Merci pour ta patience, ton rire, et pour tous ces petits riens qui rendent tout plus léger.
+        </p>
+        <p class="letter-sign">— Victor</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AJOUT DE PHOTOS PAR LES VISITEURS ============ -->
+  <section class="upload-section">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">À vous de jouer</span>
+        <h2>Ajoutez vos photos</h2>
+        <p class="upload-intro">Vous êtes passé·e par là ? Ajoutez une photo souvenir depuis votre téléphone ou votre ordinateur.</p>
+      </div>
+
+      <div class="reveal">
+        <label class="dropzone" id="dropzone" for="photo-input">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 16V4M12 4L7 9M12 4l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="dropzone-title">Glissez une photo ici</span>
+          <span class="dropzone-sub">ou cliquez pour la choisir depuis votre appareil</span>
+          <input type="file" id="photo-input" accept="image/*" multiple hidden>
+        </label>
+
+        <p class="upload-status" id="upload-status" role="status" aria-live="polite"></p>
+
+        <div class="upload-grid" id="upload-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <p class="display">à nous, encore et encore</p>
+    <p class="tiny">Fait avec un peu de code et beaucoup plus d'amour.</p>
+  </footer>
+
+  <script type="module">
+    // ============ FIREBASE (stockage partagé des photos) ============
+    // 1. Crée un projet gratuit sur https://console.firebase.google.com
+    // 2. Ajoute une "application Web" au projet, copie la config qu'il te donne
+    //    et colle-la ci-dessous à la place des valeurs entre guillemets.
+    // 3. Active "Firestore Database" (mode production) dans le menu de gauche.
+    //    (Storage n'est pas utilisé : il nécessite le forfait payant Blaze,
+    //    on stocke donc les photos compressées directement dans Firestore.)
+    // 4. Voir les instructions de règles de sécurité données dans la conversation.
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot,
+      query, orderBy, deleteDoc, doc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD0oUm5g-GHkTe0tccQegRYlSX6G7r0eTc",
+      authDomain: "for2-ccf8b.firebaseapp.com",
+      projectId: "for2-ccf8b",
+      storageBucket: "for2-ccf8b.firebasestorage.app",
+      messagingSenderId: "1047465407778",
+      appId: "1:1047465407778:web:9291164ff3d52b1a36a17b",
+      measurementId: "G-XCGLVF21YF"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+    const photosCollection = collection(db, "photos");
+
+    // Révélation générale au scroll
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(el => observer.observe(el));
+
+    // Découpage du statement en mots pour l'effet "s'allument au scroll"
+    const statementEl = document.getElementById('statement');
+    const sentence = "Deux ans, et toujours autant envie de faire la route avec toi.";
+    statementEl.innerHTML = sentence.split(' ').map(w => `<span class="word plain">${w}</span>`).join(' ');
+    const words = statementEl.querySelectorAll('.word');
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      words.forEach(w => w.classList.add('lit'));
+    } else {
+      function updateWords() {
+        const rect = statementEl.getBoundingClientRect();
+        const progress = 1 - (rect.top / (window.innerHeight * 0.7));
+        const litCount = Math.floor(Math.max(0, Math.min(1, progress)) * words.length);
+        words.forEach((w, i) => {
+          if (i < litCount) w.classList.add('lit');
+          else w.classList.remove('lit');
+        });
+      }
+      window.addEventListener('scroll', updateWords, { passive: true });
+      updateWords();
+    }
+
+    // Cartes retournables (clic ou clavier)
+    const flipCards = document.querySelectorAll('.stage-card');
+    flipCards.forEach(card => {
+      const toggle = () => {
+        const isFlipped = card.classList.toggle('flipped');
+        card.setAttribute('aria-pressed', isFlipped ? 'true' : 'false');
+      };
+      card.addEventListener('click', toggle);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      });
+    });
+
+    // Ajout de photos par les visiteurs (stockage partagé Firebase — voir config en haut du script)
+    const dropzone = document.getElementById('dropzone');
+    const photoInput = document.getElementById('photo-input');
+    const uploadGrid = document.getElementById('upload-grid');
+    const uploadStatus = document.getElementById('upload-status');
+
+    function renderPhotoThumb(photoDoc) {
+      const { url } = photoDoc.data();
+      const thumb = document.createElement('div');
+      thumb.className = 'upload-thumb';
+      thumb.innerHTML = `<img src="${url}" alt="Photo ajoutée par un visiteur">
+        <button type="button" aria-label="Supprimer cette photo">×</button>`;
+      thumb.querySelector('button').addEventListener('click', async () => {
+        try {
+          await deleteDoc(doc(db, "photos", photoDoc.id));
+        } catch (err) {
+          uploadStatus.textContent = "Impossible de supprimer cette photo pour le moment.";
+        }
+      });
+      return thumb;
+    }
+
+    // Écoute en direct : dès qu'une photo est ajoutée ou supprimée par n'importe
+    // quel visiteur, la grille se met à jour automatiquement pour tout le monde.
+    onSnapshot(query(photosCollection, orderBy("createdAt", "desc")), (snapshot) => {
+      uploadGrid.innerHTML = '';
+      snapshot.forEach(photoDoc => {
+        uploadGrid.appendChild(renderPhotoThumb(photoDoc));
+      });
+    }, (err) => {
+      uploadStatus.textContent = "Configuration Firebase manquante ou incorrecte — voir les commentaires en haut du script.";
+    });
+
+    // Compresse une image dans le navigateur (redimensionnée + JPEG) pour qu'elle
+    // tienne dans un document Firestore (limite : 1 Mo par document).
+    function compressImage(file, maxDim = 1000, quality = 0.7) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          let { width, height } = img;
+          if (width > height && width > maxDim) {
+            height = Math.round(height * (maxDim / width));
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round(width * (maxDim / height));
+            height = maxDim;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+    }
+
+    async function handleFiles(fileList) {
+      const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+      if (!files.length) return;
+
+      uploadStatus.textContent = `Envoi de ${files.length} photo${files.length > 1 ? 's' : ''}…`;
+      let added = 0;
+
+      for (const file of files) {
+        try {
+          let dataUrl = await compressImage(file, 1000, 0.7);
+          // Si le fichier reste trop lourd pour Firestore (limite 1 Mo/document),
+          // on compresse davantage avant d'abandonner.
+          if (dataUrl.length > 900000) {
+            dataUrl = await compressImage(file, 700, 0.5);
+          }
+          if (dataUrl.length > 900000) {
+            uploadStatus.textContent = "Cette photo est trop grande, réessaie avec une autre.";
+            continue;
+          }
+          await addDoc(photosCollection, { url: dataUrl, createdAt: serverTimestamp() });
+          added++;
+        } catch (err) {
+          uploadStatus.textContent = "Échec de l'envoi — vérifie ta configuration Firebase.";
+        }
+      }
+
+      if (added) {
+        uploadStatus.textContent = `${added} photo${added > 1 ? 's' : ''} ajoutée${added > 1 ? 's' : ''} ✓`;
+      }
+    }
+
+    photoInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    ['dragenter', 'dragover'].forEach(evt => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+      });
+    });
+    dropzone.addEventListener('drop', (e) => {
+      if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+    });
+
+    // Parallax léger sur les orbes du hero
+    if (!reduceMotion) {
+      const orbA = document.querySelector('.orb-a');
+      const orbB = document.querySelector('.orb-b');
+      window.addEventListener('scroll', () => {
+        const y = window.scrollY;
+        orbA.style.transform = `translateX(-70%) translateY(${y * 0.15}px)`;
+        orbB.style.transform = `translateY(${y * 0.25}px)`;
+      }, { passive: true });
+    }
+  </script>
+
+</body>
+</html>
