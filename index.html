@@ -883,6 +883,7 @@
       });
     }, (err) => {
       uploadStatus.textContent = "Configuration Firebase manquante ou incorrecte — voir les commentaires en haut du script.";
+      console.error("Erreur Firestore (section générale) :", err);
     });
 
     // Compresse une image dans le navigateur (redimensionnée + JPEG) pour qu'elle
@@ -987,7 +988,7 @@
           gridEl.innerHTML = '';
           snapshot.forEach(photoDoc => gridEl.appendChild(renderThumb(photoDoc)));
         },
-        () => { statusEl.textContent = "Configuration Firebase manquante ou incorrecte."; }
+        (err) => { statusEl.textContent = "Configuration Firebase manquante ou incorrecte."; console.error(`Erreur Firestore (${city}) :`, err); }
       );
 
       async function handleCityFiles(fileList) {
