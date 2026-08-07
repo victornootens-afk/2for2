@@ -625,6 +625,9 @@
   .quest-remove:focus-visible { opacity: 1; }
   .quest-remove:hover { background: var(--lilac); color: var(--violet-deep); }
 
+  /* ---------- DEPUIS LE PREMIER JOUR ---------- */
+  .since-section { background: var(--mist); }
+
   /* ---------- COMPTE À REBOURS ---------- */
   .countdown-section { background: var(--white); }
 
@@ -736,6 +739,39 @@
       <h1 class="hero-title">Deux ans<br><span class="grad">à nous.</span></h1>
       <p class="hero-sub">Un petit site rien que pour toi, pour fêter tout ce qu'on a construit ensemble.</p>
       <p class="scroll-cue">Continue de descendre ↓</p>
+    </div>
+  </section>
+
+  <!-- ============ DEPUIS LE PREMIER JOUR ============ -->
+  <section class="since-section">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">Ensemble depuis</span>
+        <h2>Depuis le premier jour</h2>
+        <p class="upload-intro">Le 13 septembre 2024, et ça continue.</p>
+      </div>
+
+      <div class="countdown-grid reveal" id="since-counter">
+        <div class="countdown-unit">
+          <span class="countdown-number" id="since-days">00</span>
+          <span class="countdown-label">Jours</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-number" id="since-hours">00</span>
+          <span class="countdown-label">Heures</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-number" id="since-minutes">00</span>
+          <span class="countdown-label">Minutes</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-number" id="since-seconds">00</span>
+          <span class="countdown-label">Secondes</span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1191,6 +1227,30 @@
     questInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); addQuest(); }
     });
+
+    // ============ DEPUIS LE PREMIER JOUR ============
+    // Date de départ : 13 septembre 2024 (heure locale du visiteur)
+    const sinceStart = new Date("2024-09-13T00:00:00");
+    const sinceDays = document.getElementById('since-days');
+    const sinceHours = document.getElementById('since-hours');
+    const sinceMinutes = document.getElementById('since-minutes');
+    const sinceSeconds = document.getElementById('since-seconds');
+
+    function updateSinceCounter() {
+      const diff = new Date() - sinceStart;
+      if (diff < 0) return;
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff / 3600000) % 24);
+      const minutes = Math.floor((diff / 60000) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      sinceDays.textContent = pad(days);
+      sinceHours.textContent = pad(hours);
+      sinceMinutes.textContent = pad(minutes);
+      sinceSeconds.textContent = pad(seconds);
+    }
+
+    updateSinceCounter();
+    setInterval(updateSinceCounter, 1000);
 
     // ============ COMPTE À REBOURS ============
     // Date cible : 18 décembre 2026, 23h59 (heure locale du visiteur)
