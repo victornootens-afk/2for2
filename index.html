@@ -519,44 +519,12 @@
     color: var(--violet-deep);
     margin-bottom: 8px;
   }
-  .reveal-note {
-    font-size: 0.85rem;
-    color: var(--grey);
-    margin-bottom: 18px;
-  }
-  .reveal-note.is-revealed { color: var(--violet); }
-
   .dropzone-small {
     padding: 28px 16px;
     margin: 0 0 18px;
     max-width: none;
   }
   .dropzone-small .dropzone-title { font-size: 0.95rem; margin-top: 4px; }
-
-  /* photo verrouillée : floutée avec cadenas + date au survol/tap */
-  .upload-thumb.locked img {
-    filter: blur(18px) saturate(1.1);
-    transform: scale(1.15);
-  }
-  .upload-thumb.locked .lock-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    background: rgba(23,21,28,0.28);
-    color: #fff;
-    text-align: center;
-    padding: 8px;
-  }
-  .upload-thumb.locked .lock-overlay .lock-icon { font-size: 1.1rem; }
-  .upload-thumb.locked .lock-overlay .lock-date {
-    font-size: 0.62rem;
-    letter-spacing: 0.03em;
-    line-height: 1.3;
-  }
 
   /* ---------- FOOTER ---------- */
   footer {
@@ -763,13 +731,12 @@
       <div class="section-head reveal">
         <span class="kicker">Un secret par ville</span>
         <h2>Bruxelles & Montpellier</h2>
-        <p class="upload-intro">Ajoutez des photos dans chaque ville — elles resteront floutées et se révéleront automatiquement à la date fixée.</p>
+        <p class="upload-intro">Ajoutez vos photos de Bruxelles ou de Montpellier, chacune dans sa galerie.</p>
       </div>
 
       <div class="cities-grid reveal">
         <div class="city-col">
           <h3 class="city-title">Bruxelles</h3>
-          <p class="reveal-note" id="reveal-note-bruxelles"></p>
           <label class="dropzone dropzone-small" for="photo-input-bruxelles">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M12 16V4M12 4L7 9M12 4l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -784,7 +751,6 @@
 
         <div class="city-col">
           <h3 class="city-title">Montpellier</h3>
-          <p class="reveal-note" id="reveal-note-montpellier"></p>
           <label class="dropzone dropzone-small" for="photo-input-montpellier">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M12 16V4M12 4L7 9M12 4l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -834,14 +800,6 @@
     const firebaseApp = initializeApp(firebaseConfig);
     const db = getFirestore(firebaseApp);
     const photosCollection = collection(db, "photos");
-
-    // ============ DATES DE RÉVÉLATION (à modifier par toi) ============
-    // Format : "AAAA-MM-JJTHH:MM:SS". Tant que la date n'est pas passée,
-    // les photos de la ville restent floutées pour tout le monde.
-    const REVEAL_DATES = {
-      Bruxelles: "2026-09-15T00:00:00",
-      Montpellier: "2026-10-01T00:00:00"
-    };
 
     // Révélation générale au scroll
     const revealEls = document.querySelectorAll('.reveal');
@@ -1004,32 +962,17 @@
     });
 
     // ============ SECTIONS VILLES (Bruxelles / Montpellier) ============
-    function formatRevealDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    }
-
-    function setupCityUploader(city, revealDateStr) {
-      const revealDate = new Date(revealDateStr);
+    function setupCityUploader(city) {
       const dropzoneEl = document.getElementById(`photo-input-${city.toLowerCase()}`).closest('.dropzone');
       const inputEl = document.getElementById(`photo-input-${city.toLowerCase()}`);
       const gridEl = document.getElementById(`upload-grid-${city.toLowerCase()}`);
       const statusEl = document.getElementById(`upload-status-${city.toLowerCase()}`);
-      const noteEl = document.getElementById(`reveal-note-${city.toLowerCase()}`);
-
-      function isRevealed() { return new Date() >= revealDate; }
-
-      noteEl.textContent = isRevealed()
-        ? "Révélées ✓"
-        : `Floutées jusqu'au ${formatRevealDate(revealDateStr)}`;
-      noteEl.classList.toggle('is-revealed', isRevealed());
 
       function renderThumb(photoDoc) {
         const { url } = photoDoc.data();
-        const locked = !isRevealed();
         const thumb = document.createElement('div');
-        thumb.className = 'upload-thumb' + (locked ? ' locked' : '');
+        thumb.className = 'upload-thumb';
         thumb.innerHTML = `<img src="${url}" alt="Photo souvenir — ${city}">
-          ${locked ? `<div class="lock-overlay"><span class="lock-icon">🔒</span><span class="lock-date">${formatRevealDate(revealDateStr)}</span></div>` : ''}
           <button type="button" aria-label="Supprimer cette photo">×</button>`;
         thumb.querySelector('button').addEventListener('click', async () => {
           try { await deleteDoc(doc(db, "photos", photoDoc.id)); }
@@ -1081,8 +1024,8 @@
       });
     }
 
-    setupCityUploader('Bruxelles', REVEAL_DATES.Bruxelles);
-    setupCityUploader('Montpellier', REVEAL_DATES.Montpellier);
+    setupCityUploader('Bruxelles');
+    setupCityUploader('Montpellier');
 
     // Parallax léger sur les orbes du hero
     if (!reduceMotion) {
