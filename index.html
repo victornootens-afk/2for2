@@ -1083,6 +1083,7 @@
         questStatus.textContent = '';
       } catch (err) {
         questStatus.textContent = "Échec de l'ajout — vérifie ta configuration Firebase.";
+        console.error("Erreur Firestore (ajout de quête) :", err);
       } finally {
         questAddBtn.disabled = false;
         questInput.focus();
