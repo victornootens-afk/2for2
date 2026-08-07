@@ -402,7 +402,6 @@
   }
 
   /* ---------- AJOUT DE PHOTOS ---------- */
-  .upload-section { background: var(--mist); }
   .upload-intro {
     margin-top: 18px;
     color: var(--grey);
@@ -698,33 +697,6 @@
     </div>
   </section>
 
-  <!-- ============ AJOUT DE PHOTOS PAR LES VISITEURS ============ -->
-  <section class="upload-section">
-    <div class="inner">
-      <div class="section-head reveal">
-        <span class="kicker">À vous de jouer</span>
-        <h2>Ajoutez vos photos</h2>
-        <p class="upload-intro">Vous êtes passé·e par là ? Ajoutez une photo souvenir depuis votre téléphone ou votre ordinateur.</p>
-      </div>
-
-      <div class="reveal">
-        <label class="dropzone" id="dropzone" for="photo-input">
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 16V4M12 4L7 9M12 4l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="dropzone-title">Glissez une photo ici</span>
-          <span class="dropzone-sub">ou cliquez pour la choisir depuis votre appareil</span>
-          <input type="file" id="photo-input" accept="image/*" multiple hidden>
-        </label>
-
-        <p class="upload-status" id="upload-status" role="status" aria-live="polite"></p>
-
-        <div class="upload-grid" id="upload-grid"></div>
-      </div>
-    </div>
-  </section>
-
   <!-- ============ BRUXELLES & MONTPELLIER (révélation à date fixe) ============ -->
   <section class="cities-section">
     <div class="inner">
@@ -852,40 +824,6 @@
       });
     });
 
-    // Ajout de photos par les visiteurs (stockage partagé Firebase — voir config en haut du script)
-    const dropzone = document.getElementById('dropzone');
-    const photoInput = document.getElementById('photo-input');
-    const uploadGrid = document.getElementById('upload-grid');
-    const uploadStatus = document.getElementById('upload-status');
-
-    function renderPhotoThumb(photoDoc) {
-      const { url } = photoDoc.data();
-      const thumb = document.createElement('div');
-      thumb.className = 'upload-thumb';
-      thumb.innerHTML = `<img src="${url}" alt="Photo ajoutée par un visiteur">
-        <button type="button" aria-label="Supprimer cette photo">×</button>`;
-      thumb.querySelector('button').addEventListener('click', async () => {
-        try {
-          await deleteDoc(doc(db, "photos", photoDoc.id));
-        } catch (err) {
-          uploadStatus.textContent = "Impossible de supprimer cette photo pour le moment.";
-        }
-      });
-      return thumb;
-    }
-
-    // Écoute en direct : dès qu'une photo est ajoutée ou supprimée par n'importe
-    // quel visiteur, la grille se met à jour automatiquement pour tout le monde.
-    onSnapshot(query(photosCollection, where("city", "==", "general"), orderBy("createdAt", "desc")), (snapshot) => {
-      uploadGrid.innerHTML = '';
-      snapshot.forEach(photoDoc => {
-        uploadGrid.appendChild(renderPhotoThumb(photoDoc));
-      });
-    }, (err) => {
-      uploadStatus.textContent = "Configuration Firebase manquante ou incorrecte — voir les commentaires en haut du script.";
-      console.error("Erreur Firestore (section générale) :", err);
-    });
-
     // Compresse une image dans le navigateur (redimensionnée + JPEG) pour qu'elle
     // tienne dans un document Firestore (limite : 1 Mo par document).
     function compressImage(file, maxDim = 1000, quality = 0.7) {
@@ -912,55 +850,6 @@
         img.src = objectUrl;
       });
     }
-
-    async function handleFiles(fileList) {
-      const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
-      if (!files.length) return;
-
-      uploadStatus.textContent = `Envoi de ${files.length} photo${files.length > 1 ? 's' : ''}…`;
-      let added = 0;
-
-      for (const file of files) {
-        try {
-          let dataUrl = await compressImage(file, 1000, 0.7);
-          // Si le fichier reste trop lourd pour Firestore (limite 1 Mo/document),
-          // on compresse davantage avant d'abandonner.
-          if (dataUrl.length > 900000) {
-            dataUrl = await compressImage(file, 700, 0.5);
-          }
-          if (dataUrl.length > 900000) {
-            uploadStatus.textContent = "Cette photo est trop grande, réessaie avec une autre.";
-            continue;
-          }
-          await addDoc(photosCollection, { url: dataUrl, city: "general", createdAt: serverTimestamp() });
-          added++;
-        } catch (err) {
-          uploadStatus.textContent = "Échec de l'envoi — vérifie ta configuration Firebase.";
-        }
-      }
-
-      if (added) {
-        uploadStatus.textContent = `${added} photo${added > 1 ? 's' : ''} ajoutée${added > 1 ? 's' : ''} ✓`;
-      }
-    }
-
-    photoInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-    ['dragenter', 'dragover'].forEach(evt => {
-      dropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        dropzone.classList.add('dragover');
-      });
-    });
-    ['dragleave', 'drop'].forEach(evt => {
-      dropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        dropzone.classList.remove('dragover');
-      });
-    });
-    dropzone.addEventListener('drop', (e) => {
-      if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
-    });
 
     // ============ SECTIONS VILLES (Bruxelles / Montpellier) ============
     function setupCityUploader(city) {
