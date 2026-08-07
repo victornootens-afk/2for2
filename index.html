@@ -625,6 +625,68 @@
   .quest-remove:focus-visible { opacity: 1; }
   .quest-remove:hover { background: var(--lilac); color: var(--violet-deep); }
 
+  /* ---------- COMPTE À REBOURS ---------- */
+  .countdown-section { background: var(--white); }
+
+  .countdown-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .countdown-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--mist);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 26px 22px;
+    min-width: 92px;
+    box-shadow: 0 1px 2px rgba(23,21,28,0.04);
+  }
+  .countdown-number {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(100deg, var(--violet-deep), var(--violet));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .countdown-label {
+    margin-top: 10px;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--grey);
+  }
+  .countdown-sep {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    color: var(--lilac-deep);
+  }
+
+  .countdown-done {
+    text-align: center;
+    margin-top: 28px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    color: var(--violet-deep);
+  }
+
+  @media (max-width: 560px) {
+    .countdown-grid { gap: 8px; }
+    .countdown-unit { min-width: 70px; padding: 18px 12px; }
+    .countdown-sep { display: none; }
+  }
+
   /* ---------- FOOTER ---------- */
   footer {
     padding: 70px 24px 48px;
@@ -856,6 +918,41 @@
       <ul class="quest-list reveal" id="quest-list">
         <li class="quest-empty" id="quest-empty">Aucune quête accomplie pour l'instant — soyez les premiers !</li>
       </ul>
+    </div>
+  </section>
+
+  <!-- ============ COMPTE À REBOURS ============ -->
+  <section class="countdown-section">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">Le grand jour approche</span>
+        <h2>Compte à rebours</h2>
+        <p class="upload-intro">Rendez-vous le 18 décembre 2026, 23h59.</p>
+      </div>
+
+      <div class="countdown-grid reveal" id="countdown">
+        <div class="countdown-unit">
+          <span class="countdown-number" id="cd-days">00</span>
+          <span class="countdown-label">Jours</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-number" id="cd-hours">00</span>
+          <span class="countdown-label">Heures</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-number" id="cd-minutes">00</span>
+          <span class="countdown-label">Minutes</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-number" id="cd-seconds">00</span>
+          <span class="countdown-label">Secondes</span>
+        </div>
+      </div>
+
+      <p class="countdown-done" id="countdown-done" hidden>C'est aujourd'hui ! 🎉</p>
     </div>
   </section>
 
@@ -1094,6 +1191,38 @@
     questInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); addQuest(); }
     });
+
+    // ============ COMPTE À REBOURS ============
+    // Date cible : 18 décembre 2026, 23h59 (heure locale du visiteur)
+    const countdownTarget = new Date("2026-12-18T23:59:00");
+    const countdownGrid = document.getElementById('countdown');
+    const countdownDone = document.getElementById('countdown-done');
+    const cdDays = document.getElementById('cd-days');
+    const cdHours = document.getElementById('cd-hours');
+    const cdMinutes = document.getElementById('cd-minutes');
+    const cdSeconds = document.getElementById('cd-seconds');
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function updateCountdown() {
+      const diff = countdownTarget - new Date();
+      if (diff <= 0) {
+        countdownGrid.hidden = true;
+        countdownDone.hidden = false;
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff / 3600000) % 24);
+      const minutes = Math.floor((diff / 60000) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      cdDays.textContent = pad(days);
+      cdHours.textContent = pad(hours);
+      cdMinutes.textContent = pad(minutes);
+      cdSeconds.textContent = pad(seconds);
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
 
     // Parallax léger sur les orbes du hero
     if (!reduceMotion) {
