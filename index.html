@@ -839,8 +839,8 @@
     // Format : "AAAA-MM-JJTHH:MM:SS". Tant que la date n'est pas passée,
     // les photos de la ville restent floutées pour tout le monde.
     const REVEAL_DATES = {
-      Bruxelles: "2026-12-25T00:00:00",
-      Montpellier: "2026-12-25T00:00:00"
+      Bruxelles: "2026-09-15T00:00:00",
+      Montpellier: "2026-10-01T00:00:00"
     };
 
     // Révélation générale au scroll
@@ -918,7 +918,7 @@
 
     // Écoute en direct : dès qu'une photo est ajoutée ou supprimée par n'importe
     // quel visiteur, la grille se met à jour automatiquement pour tout le monde.
-    onSnapshot(query(photosCollection, orderBy("createdAt", "desc")), (snapshot) => {
+    onSnapshot(query(photosCollection, where("city", "==", "general"), orderBy("createdAt", "desc")), (snapshot) => {
       uploadGrid.innerHTML = '';
       snapshot.forEach(photoDoc => {
         uploadGrid.appendChild(renderPhotoThumb(photoDoc));
@@ -973,7 +973,7 @@
             uploadStatus.textContent = "Cette photo est trop grande, réessaie avec une autre.";
             continue;
           }
-          await addDoc(photosCollection, { url: dataUrl, createdAt: serverTimestamp() });
+          await addDoc(photosCollection, { url: dataUrl, city: "general", createdAt: serverTimestamp() });
           added++;
         } catch (err) {
           uploadStatus.textContent = "Échec de l'envoi — vérifie ta configuration Firebase.";
