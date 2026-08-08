@@ -86,6 +86,53 @@
     letter-spacing: 0.02em;
   }
 
+  /* ---------- BADGE DE PRÉSENCE ---------- */
+  .presence-badge {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 30px rgba(91,63,160,0.18);
+    font-size: 0.85rem;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateX(-50%) translateY(16px);
+    transition: opacity 0.5s cubic-bezier(.16,1,.3,1), transform 0.5s cubic-bezier(.16,1,.3,1);
+    pointer-events: none;
+    max-width: calc(100vw - 32px);
+  }
+  .presence-badge.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .presence-dot {
+    flex-shrink: 0;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #4CD964;
+    box-shadow: 0 0 0 0 rgba(76,217,100,0.6);
+    animation: presence-pulse 1.8s ease-out infinite;
+  }
+  @keyframes presence-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(76,217,100,0.55); }
+    70% { box-shadow: 0 0 0 9px rgba(76,217,100,0); }
+    100% { box-shadow: 0 0 0 0 rgba(76,217,100,0); }
+  }
+
+  @media (max-width: 560px) {
+    .presence-badge { font-size: 0.78rem; padding: 10px 16px; text-align: center; }
+  }
+
   /* ---------- HERO ---------- */
   .hero {
     min-height: 100svh;
@@ -927,6 +974,11 @@
     </div>
   </nav>
 
+  <div class="presence-badge" id="presence-badge" role="status" aria-live="polite">
+    <span class="presence-dot"></span>
+    <span class="presence-text" id="presence-text"></span>
+  </div>
+
   <!-- ============ HERO ============ -->
   <section class="hero">
     <div class="orb orb-a"></div>
@@ -1239,7 +1291,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getFirestore, collection, addDoc, onSnapshot,
-      query, orderBy, where, deleteDoc, doc, serverTimestamp
+      query, orderBy, where, deleteDoc, doc, setDoc, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -1255,6 +1307,59 @@
     const firebaseApp = initializeApp(firebaseConfig);
     const db = getFirestore(firebaseApp);
     const photosCollection = collection(db, "photos");
+
+    // ============ PRÉSENCE EN DIRECT ============
+    // Chaque visiteur envoie un signal ("heartbeat") toutes les 15 secondes.
+    // Si au moins une autre personne a envoyé un signal récent, le badge apparaît.
+    const presenceCollection = collection(db, "presence");
+    const presenceBadge = document.getElementById('presence-badge');
+    const presenceText = document.getElementById('presence-text');
+    const ONLINE_WINDOW_MS = 25000;
+
+    function getSessionId() {
+      let id = sessionStorage.getItem('siteSessionId');
+      if (!id) {
+        id = (crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        sessionStorage.setItem('siteSessionId', id);
+      }
+      return id;
+    }
+    const mySessionId = getSessionId();
+
+    async function sendHeartbeat() {
+      try { await setDoc(doc(db, "presence", mySessionId), { lastSeen: serverTimestamp() }); }
+      catch (err) { console.error("Erreur Firestore (présence) :", err); }
+    }
+    sendHeartbeat();
+    setInterval(sendHeartbeat, 15000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') sendHeartbeat();
+    });
+
+    let presenceDocs = [];
+    function evaluateOnline() {
+      const now = Date.now();
+      const othersOnline = presenceDocs.some(d => {
+        if (d.id === mySessionId) return false;
+        const ts = d.lastSeen;
+        if (!ts || typeof ts.toMillis !== 'function') return false;
+        return (now - ts.toMillis()) < ONLINE_WINDOW_MS;
+      });
+      if (othersOnline) {
+        presenceText.textContent = "Quelqu'un d'autre est sur le site avec vous ✨";
+        presenceBadge.classList.add('is-visible');
+      } else {
+        presenceBadge.classList.remove('is-visible');
+      }
+    }
+
+    onSnapshot(presenceCollection, (snapshot) => {
+      presenceDocs = snapshot.docs.map(d => ({ id: d.id, lastSeen: d.data().lastSeen }));
+      evaluateOnline();
+    }, (err) => {
+      console.error("Erreur Firestore (écoute présence) :", err);
+    });
+    setInterval(evaluateOnline, 5000);
 
     // Révélation générale au scroll
     const revealEls = document.querySelectorAll('.reveal');
