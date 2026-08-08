@@ -732,6 +732,99 @@
     color: rgba(255,255,255,0.55);
   }
 
+  /* ---------- CARTES À GRATTER ---------- */
+  .scratch-section { background: var(--mist); }
+
+  .scratch-progress {
+    text-align: center;
+    color: var(--grey);
+    font-size: 0.9rem;
+    margin-bottom: 36px;
+  }
+
+  .scratch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .scratch-card {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 1px 2px rgba(23,21,28,0.04);
+    background: linear-gradient(160deg, var(--violet-deep), var(--violet-deep) 40%, #2a1f52);
+  }
+
+  .scratch-message {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    text-align: center;
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 500;
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  .scratch-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: grab;
+    transition: opacity 0.5s ease;
+  }
+  .scratch-canvas:active { cursor: grabbing; }
+  .scratch-canvas.revealed {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .scratch-reveal-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 2;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 999px;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .scratch-reveal-btn:hover, .scratch-reveal-btn:focus-visible { background: rgba(255,255,255,0.3); }
+  .scratch-canvas.revealed + .scratch-reveal-btn { display: none; }
+
+  .scratch-locked {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    aspect-ratio: 4/3;
+    border-radius: 24px;
+    border: 1.5px dashed var(--lilac-deep);
+    background: var(--white);
+    color: var(--grey);
+    text-align: center;
+    padding: 20px;
+    font-size: 0.85rem;
+  }
+  .scratch-locked .lock-emoji { font-size: 1.6rem; }
+
   /* ---------- COMPTE À REBOURS ---------- */
   .countdown-section { background: var(--white); }
 
@@ -1076,6 +1169,20 @@
         <p class="sky-empty" id="sky-empty">Le ciel est encore vide — accomplissez une première quête pour l'allumer.</p>
       </div>
       <p class="sky-count" id="sky-count"></p>
+    </div>
+  </section>
+
+  <!-- ============ CARTES À GRATTER ============ -->
+  <section class="scratch-section">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">Récompenses</span>
+        <h2>Cartes à gratter</h2>
+        <p class="upload-intro">Une carte se débloque tous les 5 quêtes accomplies. Gratte-la avec la souris ou le doigt.</p>
+      </div>
+
+      <p class="scratch-progress" id="scratch-progress"></p>
+      <div class="scratch-grid reveal" id="scratch-grid"></div>
     </div>
   </section>
 
@@ -1431,6 +1538,145 @@
       skyCount.textContent = snapshot.empty
         ? ''
         : `${snapshot.size} étoile${snapshot.size > 1 ? 's' : ''} allumée${snapshot.size > 1 ? 's' : ''}`;
+    });
+
+    // ============ CARTES À GRATTER ============
+    // Modifie ou complète cette liste avec tes propres mots doux / surprises.
+    // La 1ère carte débloquée (5 quêtes) utilise le message n°0, la 2e (10 quêtes)
+    // le message n°1, etc. S'il n'y a plus de message défini, un texte générique
+    // est utilisé automatiquement.
+    const SCRATCH_MESSAGES = [
+      "Tu es la meilleure chose qui me soit arrivée ces deux dernières années. 💜",
+      "Merci d'être exactement toi, tous les jours.",
+      "Chaque quête accomplie avec toi est mon moment préféré de la semaine.",
+      "Un bisou virtuel, en attendant le prochain vrai.",
+      "On continue l'aventure, encore et encore."
+    ];
+
+    const scratchGrid = document.getElementById('scratch-grid');
+    const scratchProgress = document.getElementById('scratch-progress');
+
+    function getScratchMessage(index) {
+      if (index < SCRATCH_MESSAGES.length) return SCRATCH_MESSAGES[index];
+      return `Bravo pour ces ${(index + 1) * 5} quêtes accomplies ensemble ! 🎉`;
+    }
+
+    function setupScratchCanvas(canvas, revealBtn) {
+      const ctx = canvas.getContext('2d');
+      let width, height, revealed = false;
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        width = canvas.width = Math.round(rect.width);
+        height = canvas.height = Math.round(rect.height);
+        paintFoil();
+      }
+
+      function paintFoil() {
+        const grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, '#cbb8f2');
+        grad.addColorStop(1, '#8b6fd6');
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = `600 ${Math.round(height * 0.14)}px 'Bricolage Grotesque', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✨ Gratte-moi ✨', width / 2, height / 2);
+      }
+
+      function reveal() {
+        if (revealed) return;
+        revealed = true;
+        canvas.classList.add('revealed');
+      }
+
+      function scratchAt(x, y) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(18, width * 0.07), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function checkProgress() {
+        if (revealed) return;
+        const data = ctx.getImageData(0, 0, width, height).data;
+        let cleared = 0, total = 0;
+        for (let i = 3; i < data.length; i += 4 * 6) {
+          total++;
+          if (data[i] === 0) cleared++;
+        }
+        if (total > 0 && cleared / total > 0.5) reveal();
+      }
+
+      let scratching = false;
+      function pointFromEvent(e) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      }
+
+      canvas.addEventListener('pointerdown', (e) => {
+        if (revealed) return;
+        scratching = true;
+        canvas.setPointerCapture(e.pointerId);
+        const p = pointFromEvent(e);
+        scratchAt(p.x, p.y);
+      });
+      canvas.addEventListener('pointermove', (e) => {
+        if (!scratching || revealed) return;
+        const p = pointFromEvent(e);
+        scratchAt(p.x, p.y);
+      });
+      canvas.addEventListener('pointerup', () => { scratching = false; checkProgress(); });
+      canvas.addEventListener('pointerleave', () => { if (scratching) checkProgress(); scratching = false; });
+
+      revealBtn.addEventListener('click', reveal);
+
+      window.addEventListener('resize', () => { if (!revealed) resize(); }, { passive: true });
+      resize();
+    }
+
+    function renderScratchCards(unlockedCount) {
+      scratchGrid.innerHTML = '';
+
+      for (let i = 0; i < unlockedCount; i++) {
+        const card = document.createElement('div');
+        card.className = 'scratch-card reveal is-visible';
+        card.innerHTML = `
+          <div class="scratch-message">${getScratchMessage(i)}</div>
+          <canvas class="scratch-canvas" aria-hidden="true"></canvas>
+          <button type="button" class="scratch-reveal-btn">Révéler</button>
+        `;
+        scratchGrid.appendChild(card);
+        setupScratchCanvas(card.querySelector('.scratch-canvas'), card.querySelector('.scratch-reveal-btn'));
+      }
+
+      const locked = document.createElement('div');
+      locked.className = 'scratch-locked';
+      locked.innerHTML = `<span class="lock-emoji">🔒</span><span id="scratch-locked-text"></span>`;
+      scratchGrid.appendChild(locked);
+    }
+
+    let scratchRenderedCount = -1;
+    onSnapshot(query(questCollection, orderBy("createdAt", "desc")), (snapshot) => {
+      const total = snapshot.size;
+      const unlockedCount = Math.floor(total / 5);
+      const remaining = 5 - (total % 5);
+
+      if (unlockedCount !== scratchRenderedCount) {
+        scratchRenderedCount = unlockedCount;
+        renderScratchCards(unlockedCount);
+      }
+      const lockedText = document.getElementById('scratch-locked-text');
+      if (lockedText) {
+        lockedText.textContent = total === 0
+          ? "5 quêtes à accomplir pour la 1ère carte"
+          : `Encore ${remaining} quête${remaining > 1 ? 's' : ''} pour la prochaine carte`;
+      }
+      scratchProgress.textContent = unlockedCount > 0
+        ? `${unlockedCount} carte${unlockedCount > 1 ? 's' : ''} débloquée${unlockedCount > 1 ? 's' : ''} sur ${total} quête${total > 1 ? 's' : ''} accomplie${total > 1 ? 's' : ''}`
+        : `${total} quête${total > 1 ? 's' : ''} accomplie${total > 1 ? 's' : ''} pour l'instant`;
     });
 
     // ============ COMPTE À REBOURS ============
