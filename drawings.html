@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galerie des dessins</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5B3FA0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white: #FFFFFF;
+    --mist: #F8F6FC;
+    --lilac: #E9E1F8;
+    --lilac-deep: #D2C2F0;
+    --violet: #8B6FD6;
+    --violet-deep: #5B3FA0;
+    --ink: #17151C;
+    --grey: #75717E;
+    --line: rgba(23,21,28,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--white);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 60px 24px 100px;
+  }
+  .display { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--violet-deep); outline-offset: 3px; }
+
+  .back-link {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    font-size: 0.85rem;
+    color: var(--grey);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--line);
+  }
+  .back-link:hover { color: var(--violet-deep); }
+
+  .page-header {
+    max-width: 900px;
+    margin: 0 auto 44px;
+    text-align: center;
+  }
+  .kicker {
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--violet);
+    display: block;
+    margin-bottom: 14px;
+  }
+  .page-header h1 { font-size: clamp(2rem, 5vw, 2.8rem); margin-bottom: 10px; }
+  .page-header p { color: var(--grey); }
+
+  .gallery-grid {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+
+  .drawing-card {
+    background: var(--mist);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    overflow: hidden;
+  }
+  .drawing-card img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+    background: #fff;
+  }
+  .drawing-meta { padding: 14px 16px; }
+  .drawing-prompt {
+    font-size: 0.88rem;
+    color: var(--ink);
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+  .drawing-date { font-size: 0.72rem; color: var(--grey); }
+
+  .gallery-empty {
+    text-align: center;
+    color: var(--grey);
+    font-size: 0.95rem;
+    padding: 60px 20px;
+  }
+</style>
+</head>
+<body>
+
+  <a class="back-link" href="index.html">← Retour au site</a>
+
+  <div class="page-header">
+    <span class="kicker">Vue privée</span>
+    <h1 class="display">Galerie des dessins</h1>
+    <p>Tous les dessins envoyés depuis le site, du plus récent au plus ancien.</p>
+  </div>
+
+  <div class="gallery-grid" id="gallery-grid">
+    <p class="gallery-empty" id="gallery-empty">Aucun dessin envoyé pour l'instant.</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD0oUm5g-GHkTe0tccQegRYlSX6G7r0eTc",
+      authDomain: "for2-ccf8b.firebaseapp.com",
+      projectId: "for2-ccf8b",
+      storageBucket: "for2-ccf8b.firebasestorage.app",
+      messagingSenderId: "1047465407778",
+      appId: "1:1047465407778:web:9291164ff3d52b1a36a17b",
+      measurementId: "G-XCGLVF21YF"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const drawingsCollection = collection(db, "drawings");
+
+    const galleryGrid = document.getElementById('gallery-grid');
+    const galleryEmpty = document.getElementById('gallery-empty');
+
+    function formatDate(ts) {
+      if (!ts || typeof ts.toDate !== 'function') return '';
+      return ts.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    onSnapshot(query(drawingsCollection, orderBy("createdAt", "desc")), (snapshot) => {
+      galleryGrid.innerHTML = '';
+      if (snapshot.empty) {
+        galleryGrid.appendChild(galleryEmpty);
+        return;
+      }
+      snapshot.forEach(docSnap => {
+        const { url, prompt, createdAt } = docSnap.data();
+        const card = document.createElement('div');
+        card.className = 'drawing-card';
+        card.innerHTML = `
+          <img src="${url}" alt="Dessin — ${prompt || ''}">
+          <div class="drawing-meta">
+            <p class="drawing-prompt">${prompt || 'Dessin libre'}</p>
+            <p class="drawing-date">${formatDate(createdAt)}</p>
+          </div>
+        `;
+        galleryGrid.appendChild(card);
+      });
+    }, (err) => {
+      galleryGrid.innerHTML = '<p class="gallery-empty">Impossible de charger la galerie pour le moment.</p>';
+      console.error("Erreur Firestore (galerie dessins) :", err);
+    });
+  </script>
+
+</body>
+</html>
