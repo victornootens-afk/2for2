@@ -915,6 +915,84 @@
   .quiz-launch-btn span { transition: transform 0.3s ease; }
   .quiz-launch-btn:hover span { transform: translateX(4px); }
 
+  /* ---------- DESSIN DU JOUR ---------- */
+  .draw-section { background: var(--mist); }
+
+  .draw-card {
+    max-width: 640px;
+    margin: 40px auto 0;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 1px 2px rgba(23,21,28,0.04);
+  }
+
+  .draw-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .draw-colors { display: flex; gap: 10px; }
+  .draw-color {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+  }
+  .draw-color.active { border-color: var(--violet-deep); }
+
+  .draw-tool-btn {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--white);
+    color: var(--grey);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .draw-tool-btn:hover { border-color: var(--violet); color: var(--violet-deep); }
+
+  .draw-canvas {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 18px;
+    border: 1.5px dashed var(--lilac-deep);
+    background: #fff;
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+  }
+
+  .draw-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .draw-actions .upload-status { margin: 0; text-align: left; flex: 1; }
+
+  .draw-submit-btn {
+    padding: 13px 28px;
+    border-radius: 999px;
+    border: none;
+    background: var(--violet-deep);
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+    white-space: nowrap;
+  }
+  .draw-submit-btn:hover { background: var(--violet); transform: translateY(-2px); }
+  .draw-submit-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+
   /* ---------- COMPTE À REBOURS ---------- */
   .countdown-section { background: var(--white); }
 
@@ -1292,6 +1370,33 @@
           Démarrer le quiz
           <span aria-hidden="true">→</span>
         </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DESSIN DU JOUR ============ -->
+  <section class="draw-section">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">Chaque jour, un nouveau défi</span>
+        <h2>Dessin du jour</h2>
+        <p class="upload-intro" id="draw-prompt">Chargement du défi du jour…</p>
+        <a class="quiz-launch-btn" href="drawings.html" target="_blank" rel="noopener">
+          Voir la galerie de dessins
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+
+      <div class="draw-card reveal">
+        <div class="draw-toolbar">
+          <div class="draw-colors" id="draw-colors"></div>
+          <button type="button" class="draw-tool-btn" id="draw-clear">Effacer</button>
+        </div>
+        <canvas id="draw-canvas" class="draw-canvas" aria-label="Zone de dessin"></canvas>
+        <div class="draw-actions">
+          <p class="upload-status" id="draw-status" role="status" aria-live="polite"></p>
+          <button type="button" class="draw-submit-btn" id="draw-submit">Envoyer mon dessin</button>
+        </div>
       </div>
     </div>
   </section>
@@ -1840,6 +1945,150 @@
       scratchProgress.textContent = unlockedCount > 0
         ? `${unlockedCount} carte${unlockedCount > 1 ? 's' : ''} débloquée${unlockedCount > 1 ? 's' : ''} sur ${total} quête${total > 1 ? 's' : ''} accomplie${total > 1 ? 's' : ''}`
         : `${total} quête${total > 1 ? 's' : ''} accomplie${total > 1 ? 's' : ''} pour l'instant`;
+    });
+
+    // ============ DESSIN DU JOUR ============
+    // Une nouvelle consigne par jour, identique pour tout le monde ce jour-là.
+    // Ajoute ou modifie librement les phrases dans cette liste.
+    const DRAW_PROMPTS = [
+      "Dessine-nous tous les deux, à ta façon.",
+      "Dessine ton animal préféré.",
+      "Dessine ce que tu as mangé aujourd'hui.",
+      "Dessine à quoi ressemble le bonheur pour toi.",
+      "Dessine un souvenir de nous qui te fait sourire.",
+      "Dessine-moi (sois indulgente).",
+      "Dessine ton endroit préféré au monde.",
+      "Dessine un cœur, le plus moche possible.",
+      "Dessine ce que tu ressens là, maintenant.",
+      "Dessine notre future maison de rêve.",
+      "Dessine ton super-pouvoir imaginaire.",
+      "Dessine un gribouillage random, laisse parler ton crayon.",
+      "Dessine la météo du jour, à ta sauce.",
+      "Dessine à quoi tu penses en ce moment.",
+      "Dessine-nous en super-héros."
+    ];
+
+    function getDailyPrompt() {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), 0, 0);
+      const dayOfYear = Math.floor((now - start) / 86400000);
+      return DRAW_PROMPTS[dayOfYear % DRAW_PROMPTS.length];
+    }
+
+    const dailyPrompt = getDailyPrompt();
+    document.getElementById('draw-prompt').textContent = `Aujourd'hui : ${dailyPrompt}`;
+
+    const drawCanvas = document.getElementById('draw-canvas');
+    const drawCtx = drawCanvas.getContext('2d');
+    const drawColorsEl = document.getElementById('draw-colors');
+    const drawClearBtn = document.getElementById('draw-clear');
+    const drawSubmitBtn = document.getElementById('draw-submit');
+    const drawStatus = document.getElementById('draw-status');
+
+    const DRAW_COLORS = ['#17151C', '#5B3FA0', '#D64545', '#2F6FE0', '#34A853'];
+    let currentColor = DRAW_COLORS[0];
+    let hasDrawn = false;
+
+    function resizeDrawCanvas() {
+      const rect = drawCanvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      const prevData = drawCanvas.width ? drawCanvas.toDataURL() : null;
+      drawCanvas.width = rect.width * ratio;
+      drawCanvas.height = rect.height * ratio;
+      drawCtx.scale(ratio, ratio);
+      fillWhite();
+      if (prevData && hasDrawn) {
+        const img = new Image();
+        img.onload = () => drawCtx.drawImage(img, 0, 0, rect.width, rect.height);
+        img.src = prevData;
+      }
+    }
+
+    function fillWhite() {
+      const rect = drawCanvas.getBoundingClientRect();
+      drawCtx.fillStyle = '#ffffff';
+      drawCtx.fillRect(0, 0, rect.width, rect.height);
+    }
+
+    DRAW_COLORS.forEach((color, i) => {
+      const swatch = document.createElement('button');
+      swatch.type = 'button';
+      swatch.className = 'draw-color' + (i === 0 ? ' active' : '');
+      swatch.style.background = color;
+      swatch.setAttribute('aria-label', `Choisir la couleur ${color}`);
+      swatch.addEventListener('click', () => {
+        currentColor = color;
+        drawColorsEl.querySelectorAll('.draw-color').forEach(s => s.classList.remove('active'));
+        swatch.classList.add('active');
+      });
+      drawColorsEl.appendChild(swatch);
+    });
+
+    let drawing = false;
+    let lastX = 0, lastY = 0;
+
+    function drawPos(e) {
+      const rect = drawCanvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    drawCanvas.addEventListener('pointerdown', (e) => {
+      drawing = true;
+      hasDrawn = true;
+      const p = drawPos(e);
+      lastX = p.x; lastY = p.y;
+      drawCanvas.setPointerCapture(e.pointerId);
+      drawCtx.beginPath();
+      drawCtx.arc(p.x, p.y, 1.4, 0, Math.PI * 2);
+      drawCtx.fillStyle = currentColor;
+      drawCtx.fill();
+    });
+    drawCanvas.addEventListener('pointermove', (e) => {
+      if (!drawing) return;
+      const p = drawPos(e);
+      drawCtx.strokeStyle = currentColor;
+      drawCtx.lineWidth = 3.4;
+      drawCtx.lineCap = 'round';
+      drawCtx.lineJoin = 'round';
+      drawCtx.beginPath();
+      drawCtx.moveTo(lastX, lastY);
+      drawCtx.lineTo(p.x, p.y);
+      drawCtx.stroke();
+      lastX = p.x; lastY = p.y;
+    });
+    drawCanvas.addEventListener('pointerup', () => { drawing = false; });
+    drawCanvas.addEventListener('pointerleave', () => { drawing = false; });
+
+    drawClearBtn.addEventListener('click', () => {
+      fillWhite();
+      hasDrawn = false;
+      drawStatus.textContent = '';
+    });
+
+    window.addEventListener('resize', resizeDrawCanvas, { passive: true });
+    resizeDrawCanvas();
+
+    const drawingsCollection = collection(db, "drawings");
+
+    drawSubmitBtn.addEventListener('click', async () => {
+      if (!hasDrawn) {
+        drawStatus.textContent = "Dessine quelque chose avant d'envoyer !";
+        return;
+      }
+      drawSubmitBtn.disabled = true;
+      drawStatus.textContent = 'Envoi en cours…';
+      try {
+        const dataUrl = drawCanvas.toDataURL('image/jpeg', 0.85);
+        await addDoc(drawingsCollection, { url: dataUrl, prompt: dailyPrompt, createdAt: serverTimestamp() });
+        drawStatus.textContent = 'Dessin envoyé ✓';
+        fillWhite();
+        hasDrawn = false;
+      } catch (err) {
+        drawStatus.textContent = "Échec de l'envoi — vérifie ta configuration Firebase.";
+        console.error("Erreur Firestore (dessin) :", err);
+      } finally {
+        drawSubmitBtn.disabled = false;
+      }
     });
 
     // ============ COMPTE À REBOURS ============
