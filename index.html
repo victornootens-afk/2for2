@@ -1068,6 +1068,13 @@
     background-clip: text;
     color: transparent;
   }
+  /* Empêche les emojis d'hériter du dégradé de texte (sinon ils perdent leurs couleurs) */
+  .emoji-fix {
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    -webkit-text-fill-color: initial;
+    color: initial;
+  }
   footer .tiny {
     margin-top: 14px;
     font-size: 0.82rem;
@@ -1175,7 +1182,7 @@
               <span class="flip-hint">↻ Clique pour voir la photo</span>
             </div>
             <div class="stage-card-back">
-              <img src="spritz.jpg" alt="description"> -->
+              <img src="spritz.jpg" alt="Notre premier date">
             </div>
           </div>
         </div>
@@ -1189,7 +1196,7 @@
               <span class="flip-hint">↻ Clique pour voir la photo</span>
             </div>
             <div class="stage-card-back">
-              <img src="selfie_valence.jpg" alt="description"> -->
+              <img src="selfie_valence.jpg" alt="Premier voyage ensemble à Valence">
             </div>
           </div>
         </div>
@@ -1203,7 +1210,7 @@
               <span class="flip-hint">↻ Clique pour voir la photo</span>
             </div>
             <div class="stage-card-back">
-              <img src="selfie_disney.jpg" alt="description"> -->
+              <img src="selfie_disney.jpg" alt="Disneyland Paris">
             </div>
           </div>
         </div>
@@ -1217,7 +1224,7 @@
               <span class="flip-hint">↻ Clique pour voir la photo</span>
             </div>
             <div class="stage-card-back">
-              <img src="selfie_grece.jpg" alt="description"> -->
+              <img src="selfie_grece.jpg" alt="La Grèce avec toi">
             </div>
           </div>
         </div>
@@ -1437,7 +1444,7 @@
 
   <!-- ============ FOOTER ============ -->
   <footer>
-    <p class="display">Gros bisous bisous 😘</p>
+    <p class="display">Gros bisous bisous <span class="emoji-fix">😘</span></p>
     <p class="tiny">Fait avec un peu de code et beaucoup d'amour.</p>
   </footer>
 
