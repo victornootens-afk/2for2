@@ -995,6 +995,155 @@
   .draw-submit-btn:hover { background: var(--violet); transform: translateY(-2px); }
   .draw-submit-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
 
+  /* ---------- CALENDRIER ---------- */
+  .calendar-section { background: var(--white); }
+
+  .calendar-card {
+    max-width: 620px;
+    margin: 0 auto;
+    background: var(--mist);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 28px;
+  }
+
+  .calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .calendar-nav-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--white);
+    color: var(--violet-deep);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .calendar-nav-btn:hover { background: var(--lilac); border-color: var(--lilac-deep); }
+  .calendar-month {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-transform: capitalize;
+  }
+
+  .calendar-weekdays, .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .calendar-weekdays {
+    margin-bottom: 8px;
+  }
+  .calendar-weekdays span {
+    text-align: center;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--grey);
+  }
+
+  .cal-day {
+    position: relative;
+    aspect-ratio: 1/1;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background: var(--white);
+    color: var(--ink);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  }
+  .cal-day:hover { background: var(--lilac); transform: translateY(-1px); }
+  .cal-day.cal-empty { background: transparent; border: none; cursor: default; pointer-events: none; }
+  .cal-day.cal-today { border-color: var(--violet); font-weight: 700; }
+  .cal-day.cal-has-entry { background: var(--violet-deep); color: #fff; }
+  .cal-day.cal-has-entry:hover { background: var(--violet); }
+  .cal-day .cal-dot {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  /* ---------- MODALE JOURNAL ---------- */
+  .cal-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .cal-modal[hidden] { display: none; }
+  .cal-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(23,21,28,0.45);
+    backdrop-filter: blur(4px);
+  }
+  .cal-modal-panel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    background: var(--white);
+    border-radius: 26px;
+    padding: 30px;
+    box-shadow: 0 30px 70px rgba(23,21,28,0.25);
+  }
+  .cal-modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: var(--mist);
+    color: var(--grey);
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .cal-modal-close:hover { background: var(--lilac); color: var(--violet-deep); }
+  .cal-modal-date {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-bottom: 16px;
+    padding-right: 30px;
+    text-transform: capitalize;
+  }
+  .cal-modal-textarea {
+    width: 100%;
+    min-height: 140px;
+    resize: vertical;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--mist);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .cal-modal-textarea:focus-visible { outline: 2px solid var(--violet-deep); outline-offset: 2px; }
+  .cal-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .cal-modal-actions .upload-status { margin: 0; text-align: left; flex: 1; }
+
   /* ---------- COMPTE À REBOURS ---------- */
   .countdown-section { background: var(--white); }
 
@@ -1154,15 +1303,6 @@
     </div>
   </section>
 
-  <!-- ============ STATEMENT AU SCROLL ============ -->
-  <section class="statement">
-    <div class="inner">
-      <p class="statement-text" id="statement" aria-label="Deux ans de souvenir avec toi. Continuons à en créer de nouveaux.">
-        <!-- mots générés en JS pour l'effet de révélation -->
-      </p>
-    </div>
-  </section>
-
   <!-- ============ ETAPES ============ -->
   <section class="stages">
     <div class="inner">
@@ -1270,6 +1410,15 @@
         </p>
         <p class="letter-sign">— Victor</p>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ STATEMENT AU SCROLL ============ -->
+  <section class="statement">
+    <div class="inner">
+      <p class="statement-text" id="statement" aria-label="Deux ans de souvenir avec toi. Continuons à en créer de nouveaux.">
+        <!-- mots générés en JS pour l'effet de révélation -->
+      </p>
     </div>
   </section>
 
@@ -1408,6 +1557,40 @@
       </div>
     </div>
   </section>
+
+  <!-- ============ CALENDRIER ============ -->
+  <section class="calendar-section">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">Journal à deux</span>
+        <h2>Calendrier</h2>
+        <p class="upload-intro">Cliquez sur un jour pour écrire ce que vous avez vécu — comme un journal intime à deux.</p>
+      </div>
+
+      <div class="calendar-card reveal">
+        <div class="calendar-nav">
+          <button type="button" class="calendar-nav-btn" id="cal-prev" aria-label="Mois précédent">←</button>
+          <span class="calendar-month" id="cal-month-label"></span>
+          <button type="button" class="calendar-nav-btn" id="cal-next" aria-label="Mois suivant">→</button>
+        </div>
+        <div class="calendar-weekdays" id="cal-weekdays"></div>
+        <div class="calendar-grid" id="cal-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cal-modal" id="cal-modal" hidden>
+    <div class="cal-modal-backdrop" id="cal-modal-backdrop"></div>
+    <div class="cal-modal-panel" role="dialog" aria-modal="true" aria-labelledby="cal-modal-date">
+      <button type="button" class="cal-modal-close" id="cal-modal-close" aria-label="Fermer">×</button>
+      <p class="cal-modal-date" id="cal-modal-date"></p>
+      <textarea id="cal-modal-textarea" class="cal-modal-textarea" placeholder="Qu'avez-vous fait ce jour-là ?" maxlength="2000"></textarea>
+      <div class="cal-modal-actions">
+        <p class="upload-status" id="cal-modal-status" role="status" aria-live="polite"></p>
+        <button type="button" class="draw-submit-btn" id="cal-modal-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ COMPTE À REBOURS ============ -->
   <section class="countdown-section">
@@ -2098,6 +2281,137 @@
         drawSubmitBtn.disabled = false;
       }
     });
+
+    // ============ CALENDRIER ============
+    const journalCollection = collection(db, "journal");
+    const calGrid = document.getElementById('cal-grid');
+    const calWeekdays = document.getElementById('cal-weekdays');
+    const calMonthLabel = document.getElementById('cal-month-label');
+    const calPrevBtn = document.getElementById('cal-prev');
+    const calNextBtn = document.getElementById('cal-next');
+
+    const calModal = document.getElementById('cal-modal');
+    const calModalBackdrop = document.getElementById('cal-modal-backdrop');
+    const calModalClose = document.getElementById('cal-modal-close');
+    const calModalDate = document.getElementById('cal-modal-date');
+    const calModalTextarea = document.getElementById('cal-modal-textarea');
+    const calModalSave = document.getElementById('cal-modal-save');
+    const calModalStatus = document.getElementById('cal-modal-status');
+
+    const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    WEEKDAY_LABELS.forEach(label => {
+      const span = document.createElement('span');
+      span.textContent = label;
+      calWeekdays.appendChild(span);
+    });
+
+    let journalEntries = {}; // { "2026-08-12": "texte..." }
+    let viewYear = new Date().getFullYear();
+    let viewMonth = new Date().getMonth(); // 0-11
+    let activeDateKey = null;
+
+    function dateKey(y, m, d) {
+      return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
+    function renderCalendar() {
+      const label = new Date(viewYear, viewMonth, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      calMonthLabel.textContent = label;
+
+      calGrid.innerHTML = '';
+      const firstDay = new Date(viewYear, viewMonth, 1).getDay(); // 0=dimanche
+      const offset = (firstDay + 6) % 7; // décale pour commencer le lundi
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === viewYear && today.getMonth() === viewMonth;
+
+      for (let i = 0; i < offset; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day cal-empty';
+        calGrid.appendChild(empty);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = dateKey(viewYear, viewMonth, d);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cal-day';
+        if (isCurrentMonth && d === today.getDate()) btn.classList.add('cal-today');
+        if (journalEntries[key]) {
+          btn.classList.add('cal-has-entry');
+          btn.setAttribute('aria-label', `${d} — une entrée existe, cliquer pour la lire ou la modifier`);
+        } else {
+          btn.setAttribute('aria-label', `${d} — écrire une entrée`);
+        }
+        btn.textContent = d;
+        btn.addEventListener('click', () => openDayModal(key, d));
+        calGrid.appendChild(btn);
+      }
+    }
+
+    function openDayModal(key, day) {
+      activeDateKey = key;
+      const dateLabel = new Date(viewYear, viewMonth, day).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      calModalDate.textContent = dateLabel;
+      calModalTextarea.value = journalEntries[key] || '';
+      calModalStatus.textContent = '';
+      calModal.hidden = false;
+      calModalTextarea.focus();
+    }
+
+    function closeModal() {
+      calModal.hidden = true;
+      activeDateKey = null;
+    }
+
+    calModalClose.addEventListener('click', closeModal);
+    calModalBackdrop.addEventListener('click', closeModal);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !calModal.hidden) closeModal();
+    });
+
+    calModalSave.addEventListener('click', async () => {
+      if (!activeDateKey) return;
+      const text = calModalTextarea.value.trim();
+      calModalSave.disabled = true;
+      calModalStatus.textContent = 'Enregistrement…';
+      try {
+        if (text) {
+          await setDoc(doc(db, "journal", activeDateKey), { text, updatedAt: serverTimestamp() });
+        } else {
+          await deleteDoc(doc(db, "journal", activeDateKey));
+        }
+        calModalStatus.textContent = 'Enregistré ✓';
+        setTimeout(closeModal, 500);
+      } catch (err) {
+        calModalStatus.textContent = "Échec — vérifie ta configuration Firebase.";
+        console.error("Erreur Firestore (calendrier) :", err);
+      } finally {
+        calModalSave.disabled = false;
+      }
+    });
+
+    calPrevBtn.addEventListener('click', () => {
+      viewMonth--;
+      if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      renderCalendar();
+    });
+    calNextBtn.addEventListener('click', () => {
+      viewMonth++;
+      if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+      renderCalendar();
+    });
+
+    onSnapshot(journalCollection, (snapshot) => {
+      journalEntries = {};
+      snapshot.forEach(docSnap => { journalEntries[docSnap.id] = docSnap.data().text; });
+      renderCalendar();
+    }, (err) => {
+      console.error("Erreur Firestore (écoute calendrier) :", err);
+    });
+
+    renderCalendar();
 
     // ============ COMPTE À REBOURS ============
     // Date cible : 18 décembre 2026, 23h59 (heure locale du visiteur)
