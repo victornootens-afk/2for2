@@ -1859,6 +1859,74 @@
     setupCityUploader('Bruxelles');
     setupCityUploader('Montpellier');
 
+    // ============ CONFETTIS ============
+    // Petit moteur de confettis léger, déclenché à chaque nouvelle quête accomplie.
+    const confettiCanvas = document.createElement('canvas');
+    confettiCanvas.id = 'confetti-canvas';
+    confettiCanvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:300;';
+    document.body.appendChild(confettiCanvas);
+    const confettiCtx = confettiCanvas.getContext('2d');
+    const CONFETTI_COLORS = ['#5B3FA0', '#8B6FD6', '#D2C2F0', '#E3A83B', '#ffffff'];
+    let confettiParticles = [];
+    let confettiRafId = null;
+
+    function resizeConfettiCanvas() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeConfettiCanvas, { passive: true });
+    resizeConfettiCanvas();
+
+    function launchConfetti() {
+      const reduceMotionNow = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotionNow) return; // respecte la préférence "mouvement réduit"
+
+      const count = 90;
+      const cx = confettiCanvas.width / 2;
+      for (let i = 0; i < count; i++) {
+        confettiParticles.push({
+          x: cx + (Math.random() - 0.5) * confettiCanvas.width * 0.5,
+          y: -20 - Math.random() * 80,
+          vx: (Math.random() - 0.5) * 6,
+          vy: Math.random() * 3 + 2,
+          size: Math.random() * 7 + 4,
+          color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 10,
+          life: 0,
+          maxLife: 130 + Math.random() * 40
+        });
+      }
+      if (!confettiRafId) confettiRafId = requestAnimationFrame(tickConfetti);
+    }
+
+    function tickConfetti() {
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettiParticles.forEach(p => {
+        p.vy += 0.06; // gravité
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotationSpeed;
+        p.life++;
+        const fade = Math.max(0, 1 - p.life / p.maxLife);
+        confettiCtx.save();
+        confettiCtx.globalAlpha = fade;
+        confettiCtx.translate(p.x, p.y);
+        confettiCtx.rotate((p.rotation * Math.PI) / 180);
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        confettiCtx.restore();
+      });
+      confettiParticles = confettiParticles.filter(p => p.life < p.maxLife && p.y < confettiCanvas.height + 40);
+
+      if (confettiParticles.length > 0) {
+        confettiRafId = requestAnimationFrame(tickConfetti);
+      } else {
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        confettiRafId = null;
+      }
+    }
+
     // ============ QUEST JOURNAL ============
     const questCollection = collection(db, "quests");
     const questInput = document.getElementById('quest-input');
@@ -1879,6 +1947,7 @@
       return li;
     }
 
+    let questFirstSnapshot = true;
     onSnapshot(query(questCollection, orderBy("createdAt", "desc")), (snapshot) => {
       questList.innerHTML = '';
       if (snapshot.empty) {
@@ -1886,9 +1955,16 @@
         empty.className = 'quest-empty';
         empty.textContent = "Aucune quête accomplie pour l'instant — soyez les premiers !";
         questList.appendChild(empty);
-        return;
+      } else {
+        snapshot.forEach(questDoc => questList.appendChild(renderQuestItem(questDoc)));
       }
-      snapshot.forEach(questDoc => questList.appendChild(renderQuestItem(questDoc)));
+
+      // Confettis uniquement pour les vrais nouveaux ajouts (pas au premier chargement)
+      if (!questFirstSnapshot) {
+        const hasNewQuest = snapshot.docChanges().some(change => change.type === 'added');
+        if (hasNewQuest) launchConfetti();
+      }
+      questFirstSnapshot = false;
     }, (err) => {
       questStatus.textContent = "Configuration Firebase manquante ou incorrecte.";
       console.error("Erreur Firestore (quest journal) :", err);
