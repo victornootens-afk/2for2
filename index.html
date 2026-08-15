@@ -1862,7 +1862,7 @@
 
     // ============ ÉCRAN DE CHARGEMENT ============
     const splashScreen = document.getElementById('splash-screen');
-    const splashMinDelay = new Promise(resolve => setTimeout(resolve, 600));
+    const splashMinDelay = new Promise(resolve => setTimeout(resolve, 900));
     const pageReady = new Promise(resolve => {
       if (document.readyState === 'complete') resolve();
       else window.addEventListener('load', resolve, { once: true });
