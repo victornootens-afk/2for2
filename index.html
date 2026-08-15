@@ -122,6 +122,76 @@
     color: var(--grey);
     letter-spacing: 0.02em;
   }
+  .nav-brand {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+
+  .nav-menu-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--white);
+    color: var(--violet-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  }
+  .nav-menu-btn:hover { background: var(--mist); border-color: var(--lilac-deep); }
+  .nav-menu-btn.is-open { transform: rotate(90deg); }
+
+  .nav-menu-panel {
+    position: fixed;
+    top: 68px;
+    right: 20px;
+    z-index: 110;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 210px;
+    padding: 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--line);
+    box-shadow: 0 20px 45px rgba(23,21,28,0.16);
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 0.28s cubic-bezier(.16,1,.3,1), transform 0.28s cubic-bezier(.16,1,.3,1);
+  }
+  .nav-menu-panel.is-open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .nav-menu-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 13px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .nav-menu-link:hover, .nav-menu-link:focus-visible {
+    background: var(--lilac);
+    color: var(--violet-deep);
+  }
+  .nav-menu-emoji { font-size: 1rem; }
+
+  @media (max-width: 480px) {
+    .nav-menu-panel { right: 14px; left: 14px; min-width: 0; }
+  }
 
   /* ---------- BADGE DE PRÉSENCE ---------- */
   .presence-badge {
@@ -1357,8 +1427,29 @@
 
   <nav class="nav">
     <div class="nav-inner">
-      <span class="nav-mark">2FOR2</span>
-      <span class="nav-tag">2 ans ensemble</span>
+      <div class="nav-brand">
+        <span class="nav-mark">2FOR2</span>
+        <span class="nav-tag">2 ans ensemble</span>
+      </div>
+      <button type="button" class="nav-menu-btn" id="nav-menu-btn" aria-expanded="false" aria-controls="nav-menu-panel" aria-label="Ouvrir le menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="nav-menu-panel" id="nav-menu-panel">
+      <a href="#hero" class="nav-menu-link" data-target="hero">
+        <span class="nav-menu-emoji">💜</span> Notre histoire
+      </a>
+      <a href="#moments" class="nav-menu-link" data-target="moments">
+        <span class="nav-menu-emoji">📸</span> Nos moments
+      </a>
+      <a href="#jeux" class="nav-menu-link" data-target="jeux">
+        <span class="nav-menu-emoji">🎲</span> Jeux &amp; surprises
+      </a>
+      <a href="#countdown" class="nav-menu-link" data-target="countdown">
+        <span class="nav-menu-emoji">⏳</span> Compte à rebours
+      </a>
     </div>
   </nav>
 
@@ -1368,7 +1459,7 @@
   </div>
 
   <!-- ============ HERO ============ -->
-  <section class="hero">
+  <section class="hero" id="hero">
     <div class="orb orb-a"></div>
     <div class="orb orb-b"></div>
     <div class="hero-content">
@@ -1536,7 +1627,7 @@
   </section>
 
   <!-- ============ BRUXELLES & MONTPELLIER (révélation à date fixe) ============ -->
-  <section class="cities-section">
+  <section class="cities-section" id="moments">
     <div class="inner">
       <div class="section-head reveal">
         <span class="kicker">Un secret par ville</span>
@@ -1616,7 +1707,7 @@
   </section>
 
   <!-- ============ CARTES À GRATTER ============ -->
-  <section class="scratch-section">
+  <section class="scratch-section" id="jeux">
     <div class="inner">
       <div class="section-head reveal">
         <span class="kicker">Récompenses</span>
@@ -1738,7 +1829,7 @@
   </section>
 
   <!-- ============ COMPTE À REBOURS ============ -->
-  <section class="countdown-section">
+  <section class="countdown-section" id="countdown">
     <div class="inner">
       <div class="section-head reveal">
         <span class="kicker">Le grand jour approche</span>
@@ -1859,6 +1950,37 @@
       console.error("Erreur Firestore (écoute présence) :", err);
     });
     setInterval(evaluateOnline, 5000);
+
+    // ============ MENU DE NAVIGATION ============
+    const navMenuBtn = document.getElementById('nav-menu-btn');
+    const navMenuPanel = document.getElementById('nav-menu-panel');
+
+    function closeNavMenu() {
+      navMenuPanel.classList.remove('is-open');
+      navMenuBtn.classList.remove('is-open');
+      navMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+    function toggleNavMenu() {
+      const willOpen = !navMenuPanel.classList.contains('is-open');
+      navMenuPanel.classList.toggle('is-open', willOpen);
+      navMenuBtn.classList.toggle('is-open', willOpen);
+      navMenuBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+
+    navMenuBtn.addEventListener('click', toggleNavMenu);
+    document.addEventListener('click', (e) => {
+      if (!navMenuPanel.contains(e.target) && !navMenuBtn.contains(e.target)) closeNavMenu();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNavMenu(); });
+
+    document.querySelectorAll('.nav-menu-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.getElementById(link.dataset.target);
+        closeNavMenu();
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
 
     // ============ ÉCRAN DE CHARGEMENT ============
     const splashScreen = document.getElementById('splash-screen');
