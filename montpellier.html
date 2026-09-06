@@ -118,6 +118,53 @@
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .legend-dot.visited { background: var(--violet-deep); }
   .legend-dot.unvisited { background: var(--locked); }
+  .legend-dot.me { background: #2F6FE0; }
+
+  .locate-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .locate-btn {
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--white);
+    color: var(--violet-deep);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .locate-btn:hover { background: var(--mist); border-color: var(--lilac-deep); }
+  .locate-status { font-size: 0.78rem; color: var(--grey); }
+
+  .user-dot { position: relative; width: 20px; height: 20px; }
+  .user-dot .dot-pulse {
+    position: absolute; inset: -10px;
+    border-radius: 50%;
+    background: rgba(47,111,224,0.35);
+    animation: user-pulse 1.8s ease-out infinite;
+  }
+  .user-dot .dot-core {
+    position: absolute; top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #2F6FE0;
+    border: 3px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  }
+  @keyframes user-pulse {
+    0% { transform: scale(0.4); opacity: 0.7; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .user-dot .dot-pulse { animation: none; opacity: 0.35; }
+  }
 
   .leaflet-popup-content { font-family: 'Inter', sans-serif; text-align: center; min-width: 160px; }
   .popup-name { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; margin-bottom: 8px; }
@@ -296,6 +343,11 @@
     <div class="map-legend">
       <span><span class="legend-dot visited"></span> Visité</span>
       <span><span class="legend-dot unvisited"></span> À découvrir</span>
+      <span><span class="legend-dot me"></span> Toi, en direct</span>
+    </div>
+    <div class="locate-row">
+      <button type="button" class="locate-btn" id="locate-btn">📍 Centrer sur ma position</button>
+      <p class="locate-status" id="locate-status"></p>
     </div>
   </div>
 
@@ -465,6 +517,70 @@
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19
     }).addTo(map);
+
+    // ---------- Position en direct de l'appareil ----------
+    const locateBtn = document.getElementById('locate-btn');
+    const locateStatus = document.getElementById('locate-status');
+    let userMarker = null;
+    let userAccuracyCircle = null;
+    let userLatLng = null;
+    let hasCenteredOnUser = false;
+
+    function userLocationIcon() {
+      return L.divIcon({
+        className: '',
+        html: `<div class="user-dot"><div class="dot-pulse"></div><div class="dot-core"></div></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+    }
+
+    function handlePosition(pos) {
+      const { latitude, longitude, accuracy } = pos.coords;
+      userLatLng = [latitude, longitude];
+      if (!userMarker) {
+        userMarker = L.marker(userLatLng, { icon: userLocationIcon(), zIndexOffset: 1000 }).addTo(map);
+        userMarker.bindPopup('Toi, en direct 📍');
+        userAccuracyCircle = L.circle(userLatLng, {
+          radius: accuracy, color: '#2F6FE0', fillColor: '#2F6FE0', fillOpacity: 0.1, weight: 1
+        }).addTo(map);
+      } else {
+        userMarker.setLatLng(userLatLng);
+        userAccuracyCircle.setLatLng(userLatLng);
+        userAccuracyCircle.setRadius(accuracy);
+      }
+      locateStatus.textContent = '';
+      if (!hasCenteredOnUser) {
+        hasCenteredOnUser = true;
+        map.setView(userLatLng, 15);
+      }
+    }
+
+    function handlePositionError(err) {
+      if (err.code === err.PERMISSION_DENIED) {
+        locateStatus.textContent = "Localisation refusée — active-la dans les réglages du navigateur pour te voir sur la carte.";
+      } else {
+        locateStatus.textContent = "Position indisponible pour le moment.";
+      }
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(handlePosition, handlePositionError, {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 15000
+      });
+    } else {
+      locateStatus.textContent = "La géolocalisation n'est pas supportée par ce navigateur.";
+    }
+
+    locateBtn.addEventListener('click', () => {
+      if (userLatLng) {
+        map.setView(userLatLng, 16);
+      } else {
+        locateStatus.textContent = "Recherche de ta position…";
+      }
+    });
 
     function markerIcon(visited) {
       return L.divIcon({
