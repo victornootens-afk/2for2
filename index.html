@@ -772,6 +772,80 @@
   }
   .dropzone-small .dropzone-title { font-size: 0.95rem; margin-top: 4px; }
 
+  .album-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--white);
+    color: var(--ink);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+  .album-btn:hover { border-color: var(--lilac-deep); background: var(--mist); transform: translateY(-2px); }
+  .album-btn-icon { font-size: 1.2rem; }
+  .album-btn-text { flex: 1; text-align: left; }
+  .album-btn-count {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 0.78rem;
+    color: var(--grey);
+    background: var(--mist);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  /* ---------- MODALE ALBUM ---------- */
+  .album-modal {
+    position: fixed; inset: 0; z-index: 250;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .album-modal[hidden] { display: none; }
+  .album-modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(23,21,28,0.5);
+    backdrop-filter: blur(4px);
+  }
+  .album-modal-panel {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 720px;
+    max-height: 82vh;
+    overflow-y: auto;
+    background: var(--white);
+    border-radius: 28px;
+    padding: 30px;
+    box-shadow: 0 30px 70px rgba(23,21,28,0.25);
+  }
+  .album-modal-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: var(--mist); color: var(--grey);
+    font-size: 1.05rem; cursor: pointer;
+  }
+  .album-modal-close:hover { background: var(--lilac); color: var(--violet-deep); }
+  .album-modal-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 18px;
+    padding-right: 34px;
+  }
+  .album-modal-loading {
+    text-align: center;
+    color: var(--grey);
+    font-size: 0.9rem;
+    padding: 30px 0;
+  }
+  .album-modal-loading[hidden] { display: none; }
+  .album-modal-grid { margin-top: 0; }
+
   /* ---------- QUEST JOURNAL ---------- */
   .quest-section { background: var(--mist); }
 
@@ -1767,7 +1841,11 @@
             <input type="file" id="photo-input-bruxelles" accept="image/*" multiple hidden>
           </label>
           <p class="upload-status" id="upload-status-bruxelles" role="status" aria-live="polite"></p>
-          <div class="upload-grid" id="upload-grid-bruxelles"></div>
+          <button type="button" class="album-btn" id="album-btn-bruxelles">
+            <span class="album-btn-icon">🖼️</span>
+            <span class="album-btn-text">Ouvrir l'album</span>
+            <span class="album-btn-count" id="album-count-bruxelles">…</span>
+          </button>
         </div>
 
         <div class="city-col">
@@ -1781,11 +1859,25 @@
             <input type="file" id="photo-input-montpellier" accept="image/*" multiple hidden>
           </label>
           <p class="upload-status" id="upload-status-montpellier" role="status" aria-live="polite"></p>
-          <div class="upload-grid" id="upload-grid-montpellier"></div>
+          <button type="button" class="album-btn" id="album-btn-montpellier">
+            <span class="album-btn-icon">🖼️</span>
+            <span class="album-btn-text">Ouvrir l'album</span>
+            <span class="album-btn-count" id="album-count-montpellier">…</span>
+          </button>
         </div>
       </div>
     </div>
   </section>
+
+  <div class="album-modal" id="album-modal" hidden>
+    <div class="album-modal-backdrop" id="album-modal-backdrop"></div>
+    <div class="album-modal-panel" role="dialog" aria-modal="true" aria-labelledby="album-modal-title">
+      <button type="button" class="album-modal-close" id="album-modal-close" aria-label="Fermer l'album">×</button>
+      <h3 class="album-modal-title" id="album-modal-title"></h3>
+      <p class="album-modal-loading" id="album-modal-loading">Chargement des photos…</p>
+      <div class="upload-grid album-modal-grid" id="album-modal-grid"></div>
+    </div>
+  </div>
 
   <!-- ============ QUEST JOURNAL ============ -->
   <section class="quest-section" id="quest">
@@ -2001,7 +2093,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getFirestore, collection, addDoc, onSnapshot,
-      query, orderBy, where, deleteDoc, doc, setDoc, serverTimestamp, increment, limit
+      query, orderBy, where, deleteDoc, doc, setDoc, serverTimestamp, increment, limit, getCountFromServer
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -2194,33 +2286,89 @@
     }
 
     // ============ SECTIONS VILLES (Bruxelles / Montpellier) ============
+    // ---------- Modale album (partagée entre les villes) ----------
+    const albumModal = document.getElementById('album-modal');
+    const albumModalBackdrop = document.getElementById('album-modal-backdrop');
+    const albumModalClose = document.getElementById('album-modal-close');
+    const albumModalTitle = document.getElementById('album-modal-title');
+    const albumModalLoading = document.getElementById('album-modal-loading');
+    const albumModalGrid = document.getElementById('album-modal-grid');
+    let albumUnsubscribe = null;
+
+    function closeAlbum() {
+      if (albumUnsubscribe) { albumUnsubscribe(); albumUnsubscribe = null; }
+      albumModal.hidden = true;
+      albumModalGrid.innerHTML = ''; // libère les images de la mémoire
+    }
+    albumModalClose.addEventListener('click', closeAlbum);
+    albumModalBackdrop.addEventListener('click', closeAlbum);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !albumModal.hidden) closeAlbum(); });
+
+    function openAlbum(city, statusEl) {
+      if (albumUnsubscribe) albumUnsubscribe(); // ferme un éventuel album déjà ouvert
+      albumModalTitle.textContent = `Album — ${city}`;
+      albumModalGrid.innerHTML = '';
+      albumModalLoading.textContent = 'Chargement des photos…';
+      albumModalLoading.hidden = false;
+      albumModal.hidden = false;
+
+      // Les photos ne sont chargées qu'à partir d'ici, à l'ouverture de l'album,
+      // et l'écoute est coupée à la fermeture (voir closeAlbum) pour ne rien garder en mémoire.
+      albumUnsubscribe = onSnapshot(
+        query(photosCollection, where("city", "==", city), orderBy("createdAt", "desc")),
+        (snapshot) => {
+          albumModalLoading.hidden = true;
+          albumModalGrid.innerHTML = '';
+          if (snapshot.empty) {
+            albumModalLoading.hidden = false;
+            albumModalLoading.textContent = "Aucune photo pour l'instant.";
+            return;
+          }
+          snapshot.forEach(photoDoc => {
+            const { url } = photoDoc.data();
+            const thumb = document.createElement('div');
+            thumb.className = 'upload-thumb';
+            thumb.innerHTML = `<img src="${url}" alt="Photo souvenir — ${city}" loading="lazy" decoding="async">
+              <button type="button" aria-label="Supprimer cette photo">×</button>`;
+            thumb.querySelector('button').addEventListener('click', async () => {
+              try {
+                await deleteDoc(doc(db, "photos", photoDoc.id));
+                refreshAlbumCount(city);
+              } catch { if (statusEl) statusEl.textContent = "Impossible de supprimer cette photo pour le moment."; }
+            });
+            albumModalGrid.appendChild(thumb);
+          });
+        },
+        (err) => {
+          albumModalLoading.hidden = false;
+          albumModalLoading.textContent = "Impossible de charger l'album pour le moment.";
+          console.error(`Erreur Firestore (album ${city}) :`, err);
+        }
+      );
+    }
+
+    // ---------- Compteur léger (sans jamais charger les photos elles-mêmes) ----------
+    async function refreshAlbumCount(city) {
+      const countEl = document.getElementById(`album-count-${city.toLowerCase()}`);
+      if (!countEl) return;
+      try {
+        const snap = await getCountFromServer(query(photosCollection, where("city", "==", city)));
+        const n = snap.data().count;
+        countEl.textContent = `${n} photo${n > 1 ? 's' : ''}`;
+      } catch (err) {
+        countEl.textContent = '';
+        console.error(`Erreur Firestore (comptage ${city}) :`, err);
+      }
+    }
+
     function setupCityUploader(city) {
       const dropzoneEl = document.getElementById(`photo-input-${city.toLowerCase()}`).closest('.dropzone');
       const inputEl = document.getElementById(`photo-input-${city.toLowerCase()}`);
-      const gridEl = document.getElementById(`upload-grid-${city.toLowerCase()}`);
       const statusEl = document.getElementById(`upload-status-${city.toLowerCase()}`);
+      const albumBtn = document.getElementById(`album-btn-${city.toLowerCase()}`);
 
-      function renderThumb(photoDoc) {
-        const { url } = photoDoc.data();
-        const thumb = document.createElement('div');
-        thumb.className = 'upload-thumb';
-        thumb.innerHTML = `<img src="${url}" alt="Photo souvenir — ${city}">
-          <button type="button" aria-label="Supprimer cette photo">×</button>`;
-        thumb.querySelector('button').addEventListener('click', async () => {
-          try { await deleteDoc(doc(db, "photos", photoDoc.id)); }
-          catch { statusEl.textContent = "Impossible de supprimer cette photo pour le moment."; }
-        });
-        return thumb;
-      }
-
-      onSnapshot(
-        query(photosCollection, where("city", "==", city), orderBy("createdAt", "desc")),
-        (snapshot) => {
-          gridEl.innerHTML = '';
-          snapshot.forEach(photoDoc => gridEl.appendChild(renderThumb(photoDoc)));
-        },
-        (err) => { statusEl.textContent = "Configuration Firebase manquante ou incorrecte."; console.error(`Erreur Firestore (${city}) :`, err); }
-      );
+      refreshAlbumCount(city);
+      albumBtn.addEventListener('click', () => openAlbum(city, statusEl));
 
       async function handleCityFiles(fileList) {
         const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
@@ -2229,9 +2377,9 @@
         let added = 0;
         for (const file of files) {
           try {
-            let dataUrl = await compressImage(file, 1000, 0.7);
-            if (dataUrl.length > 900000) dataUrl = await compressImage(file, 700, 0.5);
-            if (dataUrl.length > 900000) {
+            let dataUrl = await compressImage(file, 900, 0.65);
+            if (dataUrl.length > 700000) dataUrl = await compressImage(file, 650, 0.5);
+            if (dataUrl.length > 700000) {
               statusEl.textContent = "Cette photo est trop grande, réessaie avec une autre.";
               continue;
             }
@@ -2241,7 +2389,10 @@
             statusEl.textContent = "Échec de l'envoi — vérifie ta configuration Firebase.";
           }
         }
-        if (added) statusEl.textContent = `${added} photo${added > 1 ? 's' : ''} ajoutée${added > 1 ? 's' : ''} ✓`;
+        if (added) {
+          statusEl.textContent = `${added} photo${added > 1 ? 's' : ''} ajoutée${added > 1 ? 's' : ''} ✓`;
+          refreshAlbumCount(city);
+        }
       }
 
       inputEl.addEventListener('change', (e) => handleCityFiles(e.target.files));
