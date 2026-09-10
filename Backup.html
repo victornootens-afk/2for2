@@ -1256,17 +1256,22 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
     margin-bottom: 14px;
   }
-  .draw-colors { display: flex; gap: 10px; }
+  .draw-colors { display: flex; gap: 8px; flex-wrap: wrap; row-gap: 8px; }
   .draw-color {
-    width: 26px; height: 26px;
+    width: 24px; height: 24px;
     border-radius: 50%;
     border: 2px solid transparent;
     cursor: pointer;
     padding: 0;
+    flex-shrink: 0;
   }
-  .draw-color.active { border-color: var(--violet-deep); }
+  .draw-color.active { border-color: var(--violet-deep); transform: scale(1.12); }
+
+  .draw-toolbar-actions { display: flex; align-items: center; gap: 8px; }
 
   .draw-tool-btn {
     padding: 8px 16px;
@@ -1279,6 +1284,15 @@
     transition: border-color 0.2s ease, color 0.2s ease;
   }
   .draw-tool-btn:hover { border-color: var(--violet); color: var(--violet-deep); }
+
+  .draw-undo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    padding: 8px;
+  }
+  .draw-undo-btn:disabled { opacity: 0.4; cursor: default; border-color: var(--line); color: var(--grey); }
 
   .draw-canvas {
     width: 100%;
@@ -2010,7 +2024,14 @@
       <div class="draw-card reveal">
         <div class="draw-toolbar">
           <div class="draw-colors" id="draw-colors"></div>
-          <button type="button" class="draw-tool-btn" id="draw-clear">Effacer</button>
+          <div class="draw-toolbar-actions">
+            <button type="button" class="draw-tool-btn draw-undo-btn" id="draw-undo" aria-label="Annuler le dernier trait">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M9 7 4 12l5 5M4 12h11a5 5 0 0 1 0 10h-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button type="button" class="draw-tool-btn" id="draw-clear">Effacer</button>
+          </div>
         </div>
         <canvas id="draw-canvas" class="draw-canvas" aria-label="Zone de dessin"></canvas>
         <div class="draw-actions">
@@ -2867,32 +2888,64 @@
     const drawCtx = drawCanvas.getContext('2d');
     const drawColorsEl = document.getElementById('draw-colors');
     const drawClearBtn = document.getElementById('draw-clear');
+    const drawUndoBtn = document.getElementById('draw-undo');
     const drawSubmitBtn = document.getElementById('draw-submit');
     const drawStatus = document.getElementById('draw-status');
 
-    const DRAW_COLORS = ['#17151C', '#5B3FA0', '#D64545', '#2F6FE0', '#34A853'];
+    const DRAW_COLORS = [
+      '#17151C', '#5B3FA0', '#D64545', '#2F6FE0', '#34A853',
+      '#E3A83B', '#FF6FA5', '#00B8A9', '#FF8A3D', '#8B4A2F'
+    ];
     let currentColor = DRAW_COLORS[0];
     let hasDrawn = false;
+    let strokes = []; // historique des traits, pour pouvoir annuler le dernier
+    let currentStroke = null;
 
     function resizeDrawCanvas() {
       const rect = drawCanvas.getBoundingClientRect();
       const ratio = window.devicePixelRatio || 1;
-      const prevData = drawCanvas.width ? drawCanvas.toDataURL() : null;
       drawCanvas.width = rect.width * ratio;
       drawCanvas.height = rect.height * ratio;
       drawCtx.scale(ratio, ratio);
-      fillWhite();
-      if (prevData && hasDrawn) {
-        const img = new Image();
-        img.onload = () => drawCtx.drawImage(img, 0, 0, rect.width, rect.height);
-        img.src = prevData;
-      }
+      redrawAll();
     }
 
     function fillWhite() {
       const rect = drawCanvas.getBoundingClientRect();
       drawCtx.fillStyle = '#ffffff';
       drawCtx.fillRect(0, 0, rect.width, rect.height);
+    }
+
+    function drawStroke(stroke) {
+      if (!stroke.points.length) return;
+      const first = stroke.points[0];
+      drawCtx.beginPath();
+      drawCtx.arc(first.x, first.y, 1.4, 0, Math.PI * 2);
+      drawCtx.fillStyle = stroke.color;
+      drawCtx.fill();
+
+      if (stroke.points.length > 1) {
+        drawCtx.strokeStyle = stroke.color;
+        drawCtx.lineWidth = 3.4;
+        drawCtx.lineCap = 'round';
+        drawCtx.lineJoin = 'round';
+        drawCtx.beginPath();
+        drawCtx.moveTo(first.x, first.y);
+        for (let i = 1; i < stroke.points.length; i++) {
+          drawCtx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+        drawCtx.stroke();
+      }
+    }
+
+    function redrawAll() {
+      fillWhite();
+      strokes.forEach(drawStroke);
+      updateUndoState();
+    }
+
+    function updateUndoState() {
+      drawUndoBtn.disabled = strokes.length === 0;
     }
 
     DRAW_COLORS.forEach((color, i) => {
@@ -2910,7 +2963,6 @@
     });
 
     let drawing = false;
-    let lastX = 0, lastY = 0;
 
     function drawPos(e) {
       const rect = drawCanvas.getBoundingClientRect();
@@ -2921,7 +2973,7 @@
       drawing = true;
       hasDrawn = true;
       const p = drawPos(e);
-      lastX = p.x; lastY = p.y;
+      currentStroke = { color: currentColor, points: [p] };
       drawCanvas.setPointerCapture(e.pointerId);
       drawCtx.beginPath();
       drawCtx.arc(p.x, p.y, 1.4, 0, Math.PI * 2);
@@ -2929,25 +2981,43 @@
       drawCtx.fill();
     });
     drawCanvas.addEventListener('pointermove', (e) => {
-      if (!drawing) return;
+      if (!drawing || !currentStroke) return;
       const p = drawPos(e);
+      const last = currentStroke.points[currentStroke.points.length - 1];
       drawCtx.strokeStyle = currentColor;
       drawCtx.lineWidth = 3.4;
       drawCtx.lineCap = 'round';
       drawCtx.lineJoin = 'round';
       drawCtx.beginPath();
-      drawCtx.moveTo(lastX, lastY);
+      drawCtx.moveTo(last.x, last.y);
       drawCtx.lineTo(p.x, p.y);
       drawCtx.stroke();
-      lastX = p.x; lastY = p.y;
+      currentStroke.points.push(p);
     });
-    drawCanvas.addEventListener('pointerup', () => { drawing = false; });
-    drawCanvas.addEventListener('pointerleave', () => { drawing = false; });
+    function finishStroke() {
+      if (drawing && currentStroke) {
+        strokes.push(currentStroke);
+        currentStroke = null;
+        updateUndoState();
+      }
+      drawing = false;
+    }
+    drawCanvas.addEventListener('pointerup', finishStroke);
+    drawCanvas.addEventListener('pointerleave', finishStroke);
 
     drawClearBtn.addEventListener('click', () => {
+      strokes = [];
       fillWhite();
       hasDrawn = false;
       drawStatus.textContent = '';
+      updateUndoState();
+    });
+
+    drawUndoBtn.addEventListener('click', () => {
+      if (!strokes.length) return;
+      strokes.pop();
+      hasDrawn = strokes.length > 0;
+      redrawAll();
     });
 
     window.addEventListener('resize', resizeDrawCanvas, { passive: true });
@@ -2966,8 +3036,10 @@
         const dataUrl = drawCanvas.toDataURL('image/jpeg', 0.85);
         await addDoc(drawingsCollection, { url: dataUrl, prompt: dailyPrompt, createdAt: serverTimestamp() });
         drawStatus.textContent = 'Dessin envoyé ✓';
+        strokes = [];
         fillWhite();
         hasDrawn = false;
+        updateUndoState();
       } catch (err) {
         drawStatus.textContent = "Échec de l'envoi — vérifie ta configuration Firebase.";
         console.error("Erreur Firestore (dessin) :", err);
