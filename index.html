@@ -2840,10 +2840,10 @@
       { min: 60, name: 'Un arbre en fleurs', detail: 'En pleine floraison, comme vous deux.' }
     ];
 
-    let treeCounts = { quests: 0, mtp: 0, drawings: 0, kisses: 0 };
+    let treeCounts = { quests: 0, mtp: 0, drawings: 0 };
 
     function updateTree() {
-      const score = treeCounts.quests + treeCounts.mtp + treeCounts.drawings + Math.floor(treeCounts.kisses / 5);
+      const score = treeCounts.quests + treeCounts.mtp + treeCounts.drawings;
       let stageIndex = 0;
       TREE_STAGES.forEach((s, i) => { if (score >= s.min) stageIndex = i; });
 
@@ -2858,10 +2858,6 @@
     onSnapshot(questCollection, (snap) => { treeCounts.quests = snap.size; updateTree(); });
     onSnapshot(collection(db, "montpellierVisits"), (snap) => { treeCounts.mtp = snap.size; updateTree(); });
     onSnapshot(collection(db, "drawings"), (snap) => { treeCounts.drawings = snap.size; updateTree(); });
-    onSnapshot(doc(db, "counters", "kisses"), (snap) => {
-      treeCounts.kisses = snap.exists() ? (snap.data().count || 0) : 0;
-      updateTree();
-    });
 
     // ============ DEPUIS LE PREMIER JOUR ============
     // Date de départ : 13 septembre 2024 (heure locale du visiteur)
