@@ -1541,6 +1541,53 @@
     100% { opacity: 0; transform: translate(calc(-50% + var(--kiss-drift, 0px)), -90px) scale(1.3); }
   }
 
+  /* ---------- DISTANCE EN TEMPS RÉEL ---------- */
+  .distance-section { background: var(--mist); }
+
+  .distance-card {
+    max-width: 420px;
+    margin: 0 auto;
+    text-align: center;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 32px;
+    padding: 44px 32px;
+  }
+
+  .distance-share-btn {
+    padding: 13px 26px;
+    border-radius: 999px;
+    border: none;
+    background: var(--violet-deep);
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+  }
+  .distance-share-btn:hover { background: var(--violet); transform: translateY(-2px); }
+  .distance-share-btn:disabled { opacity: 0.55; cursor: default; transform: none; }
+
+  .distance-value {
+    margin-top: 22px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.2rem, 6vw, 3rem);
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(100deg, var(--violet-deep), var(--violet));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .distance-value[hidden] { display: none; }
+
+  .distance-status {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: var(--grey);
+  }
+
   /* ---------- COMPTE À REBOURS ---------- */
   .countdown-section { background: var(--white); }
 
@@ -1698,6 +1745,9 @@
       </a>
       <a href="#bisous" class="nav-menu-link" data-target="bisous">
         <span class="nav-menu-emoji">💋</span> Bisous
+      </a>
+      <a href="#distance" class="nav-menu-link" data-target="distance">
+        <span class="nav-menu-emoji">📍</span> Distance
       </a>
     </div>
   </nav>
@@ -2104,6 +2154,23 @@
         <button type="button" class="kiss-btn" id="kiss-btn" aria-label="Envoyer un bisou">💋</button>
         <p class="kiss-count" id="kiss-count">0</p>
         <p class="kiss-label" id="kiss-label">bisou envoyé</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DISTANCE EN TEMPS RÉEL ============ -->
+  <section class="distance-section" id="distance">
+    <div class="inner">
+      <div class="section-head reveal">
+        <span class="kicker">En direct</span>
+        <h2>Distance en temps réel</h2>
+        <p class="upload-intro">Activez votre position pour voir la distance qui vous sépare en ce moment.</p>
+      </div>
+
+      <div class="distance-card reveal">
+        <button type="button" class="distance-share-btn" id="distance-share-btn">📍 Partager ma position</button>
+        <p class="distance-value" id="distance-value" hidden></p>
+        <p class="distance-status" id="distance-status">En attente de position…</p>
       </div>
     </div>
   </section>
@@ -3215,6 +3282,107 @@
       }
     });
 
+    // ============ DISTANCE EN TEMPS RÉEL ============
+    const liveLocationCollection = collection(db, "liveLocation");
+    const distanceShareBtn = document.getElementById('distance-share-btn');
+    const distanceValue = document.getElementById('distance-value');
+    const distanceStatus = document.getElementById('distance-status');
+    const DISTANCE_FRESH_MS = 90000; // considère une position "en direct" si < 90s
+
+    function haversineKm(lat1, lng1, lat2, lng2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    let liveLocations = {}; // { sessionId: {lat, lng, updatedAt} }
+    let lastSentCoords = null;
+    let sharingLocation = false;
+
+    function evaluateDistance() {
+      const now = Date.now();
+      const fresh = Object.entries(liveLocations).filter(([, d]) => {
+        return d.updatedAt && typeof d.updatedAt.toMillis === 'function' &&
+          (now - d.updatedAt.toMillis()) < DISTANCE_FRESH_MS;
+      });
+
+      const mine = fresh.find(([id]) => id === mySessionId);
+      const other = fresh.find(([id]) => id !== mySessionId);
+
+      if (!sharingLocation) {
+        distanceValue.hidden = true;
+        distanceStatus.textContent = "Active le partage pour voir la distance qui vous sépare.";
+        return;
+      }
+      if (!other) {
+        distanceValue.hidden = true;
+        distanceStatus.textContent = "En attente de la position de l'autre appareil…";
+        return;
+      }
+      if (!mine) {
+        distanceValue.hidden = true;
+        distanceStatus.textContent = "Recherche de ta position…";
+        return;
+      }
+
+      const km = haversineKm(mine[1].lat, mine[1].lng, other[1].lat, other[1].lng);
+      const label = km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(km < 10 ? 1 : 0)} km`;
+      distanceValue.textContent = label;
+      distanceValue.hidden = false;
+      distanceStatus.textContent = "Vous êtes à cette distance l'un de l'autre, en direct.";
+    }
+
+    onSnapshot(liveLocationCollection, (snapshot) => {
+      liveLocations = {};
+      snapshot.forEach(d => { liveLocations[d.id] = d.data(); });
+      evaluateDistance();
+    }, (err) => {
+      console.error("Erreur Firestore (distance) :", err);
+    });
+    setInterval(evaluateDistance, 10000);
+
+    async function sendMyLocation(lat, lng) {
+      lastSentCoords = { lat, lng };
+      try {
+        await setDoc(doc(db, "liveLocation", mySessionId), { lat, lng, updatedAt: serverTimestamp() });
+      } catch (err) {
+        console.error("Erreur Firestore (envoi position) :", err);
+      }
+    }
+
+    function startSharingLocation() {
+      if (!navigator.geolocation) {
+        distanceStatus.textContent = "La géolocalisation n'est pas supportée par ce navigateur.";
+        return;
+      }
+      sharingLocation = true;
+      distanceShareBtn.disabled = true;
+      distanceShareBtn.textContent = '📍 Position partagée';
+
+      navigator.geolocation.watchPosition((pos) => {
+        sendMyLocation(pos.coords.latitude, pos.coords.longitude);
+        evaluateDistance();
+      }, (err) => {
+        sharingLocation = false;
+        distanceShareBtn.disabled = false;
+        distanceShareBtn.textContent = '📍 Partager ma position';
+        distanceStatus.textContent = err.code === err.PERMISSION_DENIED
+          ? "Localisation refusée — active-la dans les réglages du navigateur."
+          : "Position indisponible pour le moment.";
+      }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 });
+
+      // Renvoie la position régulièrement pour rester "en direct" même sans déplacement
+      setInterval(() => {
+        if (lastSentCoords) sendMyLocation(lastSentCoords.lat, lastSentCoords.lng);
+      }, 30000);
+    }
+
+    distanceShareBtn.addEventListener('click', startSharingLocation);
+
     // ============ COMPTE À REBOURS ============
     // Date cible : 18 décembre 2026, 23h59 (heure locale du visiteur)
     const countdownTarget = new Date("2026-12-18T23:59:00");
@@ -3314,6 +3482,34 @@
       updateBellBadge(all);
     }
 
+    // Son léger + vibration, uniquement pour une vraie nouvelle notification
+    // (jamais au premier chargement de la page)
+    let audioCtx = null;
+    let highestNotifTs = null;
+
+    function playNotificationAlert() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.1, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.36);
+      } catch (err) { /* son non disponible, tant pis */ }
+
+      if (navigator.vibrate) {
+        try { navigator.vibrate(60); } catch (err) { /* vibration non supportée */ }
+      }
+    }
+
     function updateBellBadge(all) {
       const lastSeen = Number(localStorage.getItem(NOTIF_SEEN_KEY) || 0);
       const unread = all.filter(item => item.ts > lastSeen).length;
@@ -3322,6 +3518,14 @@
         navBellBadge.hidden = false;
       } else {
         navBellBadge.hidden = true;
+      }
+
+      const currentMaxTs = all.reduce((max, item) => Math.max(max, item.ts), 0);
+      if (highestNotifTs === null) {
+        highestNotifTs = currentMaxTs; // référence de départ, pas d'alerte au chargement initial
+      } else if (currentMaxTs > highestNotifTs) {
+        highestNotifTs = currentMaxTs;
+        playNotificationAlert();
       }
     }
 
