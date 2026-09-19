@@ -104,19 +104,41 @@
     margin-top: 6px;
     margin-bottom: 22px;
   }
-  .pin-input {
-    width: 100%;
-    padding: 14px;
+  .pin-boxes {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  .pin-box {
+    width: 52px;
+    height: 60px;
     border-radius: 14px;
     border: 1.5px solid var(--line);
     background: var(--mist);
-    text-align: center;
-    font-size: 1.6rem;
-    letter-spacing: 0.6em;
-    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.5rem;
+    color: var(--ink);
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
-  .pin-input:focus-visible { outline: 2px solid var(--violet-deep); outline-offset: 2px; }
+  .pin-box.filled { border-color: var(--violet-deep); background: var(--white); }
+
+  .pin-hidden-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    border: none;
+    padding: 0;
+    margin: 0;
+    caret-color: transparent;
+    font-size: 16px; /* évite le zoom automatique sur iOS */
+    cursor: text;
+  }
   .pin-submit {
     width: 100%;
     margin-top: 14px;
@@ -1832,7 +1854,13 @@
       <span class="pin-icon">🔒</span>
       <h1 class="pin-title">Code d'accès</h1>
       <p class="pin-sub">Entre le code à 4 chiffres pour ouvrir le site.</p>
-      <input type="password" id="pin-input" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="Code d'accès à 4 chiffres">
+      <div class="pin-boxes" id="pin-boxes">
+        <span class="pin-box"></span>
+        <span class="pin-box"></span>
+        <span class="pin-box"></span>
+        <span class="pin-box"></span>
+        <input type="tel" id="pin-input" class="pin-hidden-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="Code d'accès à 4 chiffres">
+      </div>
       <button type="button" class="pin-submit" id="pin-submit">Valider</button>
       <p class="pin-error" id="pin-error" hidden>Code incorrect, réessaie.</p>
     </div>
@@ -2565,6 +2593,15 @@
     const pinInput = document.getElementById('pin-input');
     const pinSubmit = document.getElementById('pin-submit');
     const pinError = document.getElementById('pin-error');
+    const pinBoxEls = document.querySelectorAll('.pin-box');
+
+    function renderPinBoxes() {
+      const val = pinInput.value;
+      pinBoxEls.forEach((box, i) => {
+        box.textContent = val[i] ? '•' : '';
+        box.classList.toggle('filled', !!val[i]);
+      });
+    }
 
     function unlockSite() {
       sessionStorage.setItem(PIN_SESSION_KEY, 'true');
@@ -2584,6 +2621,7 @@
       } else {
         pinError.hidden = false;
         pinInput.value = '';
+        renderPinBoxes();
         pinCard.classList.remove('pin-shake');
         void pinCard.offsetWidth; // relance l'animation même en cas d'erreurs répétées
         pinCard.classList.add('pin-shake');
@@ -2591,11 +2629,14 @@
       }
     }
 
-    pinSubmit.addEventListener('click', checkPin);
-    pinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPin(); });
+    document.getElementById('pin-boxes').addEventListener('click', () => pinInput.focus());
     pinInput.addEventListener('input', () => {
       pinInput.value = pinInput.value.replace(/\D/g, '').slice(0, 4);
+      renderPinBoxes();
+      if (pinInput.value.length === 4) checkPin();
     });
+    pinSubmit.addEventListener('click', checkPin);
+    pinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPin(); });
 
     // ============ ÉCRAN DE CHARGEMENT ============
     const splashScreen = document.getElementById('splash-screen');
